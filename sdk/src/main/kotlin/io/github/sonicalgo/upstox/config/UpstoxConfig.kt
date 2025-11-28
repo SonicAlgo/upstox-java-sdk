@@ -49,6 +49,10 @@ internal object UpstoxConfig {
             field = value
         }
 
+    /** Whether WebSocket auto-reconnect is enabled globally. */
+    @Volatile
+    var webSocketAutoReconnectEnabled: Boolean = true
+
     /** Resets all configuration to defaults. */
     fun resetToDefaults() {
         // Authentication
@@ -62,5 +66,6 @@ internal object UpstoxConfig {
 
         // WebSocket configuration
         maxWebSocketReconnectAttempts = UpstoxConstants.WEBSOCKET_DEFAULT_MAX_RECONNECT_ATTEMPTS
+        webSocketAutoReconnectEnabled = true
     }
 }

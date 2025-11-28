@@ -3,6 +3,7 @@ package io.github.sonicalgo.upstox.websocket
 import io.github.sonicalgo.upstox.api.WebSocketApi
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.OkHttpClientFactory
+import io.github.sonicalgo.upstox.config.UpstoxConfig
 import io.github.sonicalgo.upstox.config.UpstoxConstants
 import io.github.sonicalgo.upstox.model.marketdata.*
 import io.github.sonicalgo.upstox.websocket.proto.MarketDataFeedProto.*
@@ -64,14 +65,14 @@ class MarketDataFeedClient internal constructor() : BaseWebSocketClient(
      * Connect to the market data feed WebSocket.
      *
      * Automatically obtains the authorized WebSocket URL before connecting.
-     * If auto-reconnect is enabled (default), the client will automatically
+     * If auto-reconnect is enabled (default from global config), the client will automatically
      * attempt to reconnect on disconnection with exponential backoff.
      *
      * @param listener Listener for feed events
-     * @param autoReconnect Whether to automatically reconnect on disconnection (default: true)
+     * @param autoReconnect Whether to automatically reconnect on disconnection (default: uses global config)
      */
     @JvmOverloads
-    fun connect(listener: MarketDataListener, autoReconnect: Boolean = true) {
+    fun connect(listener: MarketDataListener, autoReconnect: Boolean = UpstoxConfig.webSocketAutoReconnectEnabled) {
         this.listener = listener
         initiateConnection(autoReconnect)
     }

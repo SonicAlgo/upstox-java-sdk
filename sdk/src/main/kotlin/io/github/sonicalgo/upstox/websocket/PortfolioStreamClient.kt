@@ -4,6 +4,7 @@ import io.github.sonicalgo.upstox.api.PortfolioUpdateType
 import io.github.sonicalgo.upstox.api.WebSocketApi
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.OkHttpClientFactory
+import io.github.sonicalgo.upstox.config.UpstoxConfig
 import io.github.sonicalgo.upstox.model.websocket.*
 
 /**
@@ -71,18 +72,18 @@ class PortfolioStreamClient internal constructor() : BaseWebSocketClient(
      * Connect to the portfolio stream WebSocket.
      *
      * Automatically obtains the authorized WebSocket URL before connecting.
-     * If auto-reconnect is enabled (default), the client will automatically
+     * If auto-reconnect is enabled (default from global config), the client will automatically
      * attempt to reconnect on disconnection with exponential backoff.
      *
      * @param listener Listener for portfolio events
      * @param updateTypes Types of updates to subscribe to. Defaults to all types.
-     * @param autoReconnect Whether to automatically reconnect on disconnection (default: true)
+     * @param autoReconnect Whether to automatically reconnect on disconnection (default: uses global config)
      */
     @JvmOverloads
     fun connect(
         listener: PortfolioStreamListener,
         updateTypes: Set<PortfolioUpdateType> = PortfolioUpdateType.entries.toSet(),
-        autoReconnect: Boolean = true
+        autoReconnect: Boolean = UpstoxConfig.webSocketAutoReconnectEnabled
     ) {
         this.listener = listener
         this.updateTypes = updateTypes

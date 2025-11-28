@@ -380,6 +380,28 @@ class Upstox private constructor() : Closeable {
     fun getMaxWebSocketReconnectAttempts(): Int = UpstoxConfig.maxWebSocketReconnectAttempts
 
     /**
+     * Enables or disables automatic WebSocket reconnection globally.
+     *
+     * When enabled (default), WebSocket clients will automatically attempt
+     * to reconnect on disconnection with exponential backoff.
+     * This can be overridden per-connection in the connect() method.
+     *
+     * Default: true (enabled)
+     *
+     * @param enabled Whether to enable auto-reconnection
+     */
+    fun setWebSocketAutoReconnectEnabled(enabled: Boolean) {
+        UpstoxConfig.webSocketAutoReconnectEnabled = enabled
+    }
+
+    /**
+     * Checks if WebSocket auto-reconnection is enabled.
+     *
+     * @return true if auto-reconnection is enabled
+     */
+    fun isWebSocketAutoReconnectEnabled(): Boolean = UpstoxConfig.webSocketAutoReconnectEnabled
+
+    /**
      * Resets all configuration to default values.
      *
      * This clears:
@@ -388,6 +410,7 @@ class Upstox private constructor() : Closeable {
      * - Rate limit retries (0)
      * - HTTP logging (disabled)
      * - WebSocket reconnect attempts (default)
+     * - WebSocket auto-reconnect (enabled)
      *
      * Note: You will need to call [setAccessToken] again after this.
      */

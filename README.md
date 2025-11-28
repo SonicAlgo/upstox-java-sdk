@@ -833,8 +833,7 @@ portfolioClient.connect(
         PortfolioUpdateType.POSITION,
         PortfolioUpdateType.HOLDING,
         PortfolioUpdateType.GTT_ORDER
-    ),
-    autoReconnect = true
+    )
 )
 
 // Close when done
@@ -930,6 +929,9 @@ upstox.setRateLimitRetries(3)  // Default: 0 (disabled)
 // Configure WebSocket reconnection attempts
 upstox.setMaxWebSocketReconnectAttempts(10)  // Default: 5
 
+// Enable/disable WebSocket auto-reconnection
+upstox.setWebSocketAutoReconnectEnabled(true)  // Default: true
+
 // Reset all configuration to defaults (clears tokens too)
 upstox.resetConfiguration()
 ```
@@ -939,6 +941,7 @@ upstox.resetConfiguration()
 | HTTP Logging | `setLoggingEnabled(Boolean)` | `false` | - | Log HTTP requests/responses for debugging |
 | Rate Limit Retry | `setRateLimitRetries(Int)` | `0` | 0-5 | Auto-retry on HTTP 429 with exponential backoff |
 | WebSocket Reconnect | `setMaxWebSocketReconnectAttempts(Int)` | `5` | 1-20 | Max reconnection attempts before giving up |
+| WebSocket Auto-Reconnect | `setWebSocketAutoReconnectEnabled(Boolean)` | `true` | - | Auto-reconnect on WebSocket disconnection |
 | Reset Config | `resetConfiguration()` | - | - | Reset all settings to defaults (clears tokens) |
 
 > **Note:** When `rateLimitRetries > 0`, the SDK automatically retries rate-limited requests (HTTP 429) with exponential backoff (1s, 2s, 4s, ...) before throwing an exception.
