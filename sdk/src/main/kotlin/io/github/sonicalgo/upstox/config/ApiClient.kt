@@ -17,8 +17,12 @@ import okhttp3.Response
 import java.io.Closeable
 import java.lang.reflect.Type
 import java.net.URLEncoder
-import java.text.ParseException
-import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.*
 
 /**
@@ -252,10 +256,8 @@ internal object ApiClient : Closeable {
                     rawResponse = responseBody
                 )
             }
-        } catch (e: UpstoxApiException) {
+        } catch (e: Exception) {
             throw e
-        } catch (_: Exception) {
-            // Failed to parse error response - fall through to throw with raw response preserved
         }
 
         // Always preserve raw response even when parsing fails
@@ -321,6 +323,8 @@ private class SafeEnumTypeAdapterFactory : TypeAdapterFactory {
 /**
  * Flexible date deserializer that handles multiple date formats from Upstox API.
  *
+ * Uses thread-safe DateTimeFormatter instead of SimpleDateFormat.
+ *
  * Supports:
  * - ISO 8601 with milliseconds and timezone: "2024-01-15T10:30:00.000+05:30"
  * - ISO 8601 with timezone: "2024-01-15T10:30:00+05:30"
@@ -329,13 +333,14 @@ private class SafeEnumTypeAdapterFactory : TypeAdapterFactory {
  * - Date only: "2024-01-15"
  */
 private class FlexibleDateDeserializer : JsonDeserializer<Date> {
-    private val dateFormats = listOf(
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.US),
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US),
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS", Locale.US),
-        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US),
-        SimpleDateFormat("yyyy-MM-dd", Locale.US)
-    )
+    companion object {
+        private val OFFSET_DATETIME_WITH_MILLIS = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+        private val OFFSET_DATETIME = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX")
+        private val LOCAL_DATETIME_WITH_MILLIS = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")
+        private val LOCAL_DATETIME = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+        private val LOCAL_DATE = DateTimeFormatter.ISO_LOCAL_DATE
+        private val DEFAULT_ZONE = ZoneId.systemDefault()
+    }
 
     override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): Date? {
         if (json == null || json.isJsonNull) return null
@@ -343,15 +348,45 @@ private class FlexibleDateDeserializer : JsonDeserializer<Date> {
         val dateString = json.asString
         if (dateString.isBlank()) return null
 
-        for (format in dateFormats) {
-            try {
-                return format.parse(dateString)
-            } catch (_: ParseException) {
-                // Try next format
-            }
-        }
+        // Try parsing with offset (timezone-aware formats)
+        tryParseOffsetDateTime(dateString, OFFSET_DATETIME_WITH_MILLIS)?.let { return it }
+        tryParseOffsetDateTime(dateString, OFFSET_DATETIME)?.let { return it }
+
+        // Try parsing without offset (local datetime formats)
+        tryParseLocalDateTime(dateString, LOCAL_DATETIME_WITH_MILLIS)?.let { return it }
+        tryParseLocalDateTime(dateString, LOCAL_DATETIME)?.let { return it }
+
+        // Try parsing date only
+        tryParseLocalDate(dateString)?.let { return it }
 
         // If all formats fail, return null instead of throwing
         return null
+    }
+
+    private fun tryParseOffsetDateTime(dateString: String, formatter: DateTimeFormatter): Date? {
+        return try {
+            val odt = OffsetDateTime.parse(dateString, formatter)
+            Date.from(odt.toInstant())
+        } catch (_: DateTimeParseException) {
+            null
+        }
+    }
+
+    private fun tryParseLocalDateTime(dateString: String, formatter: DateTimeFormatter): Date? {
+        return try {
+            val ldt = LocalDateTime.parse(dateString, formatter)
+            Date.from(ldt.atZone(DEFAULT_ZONE).toInstant())
+        } catch (_: DateTimeParseException) {
+            null
+        }
+    }
+
+    private fun tryParseLocalDate(dateString: String): Date? {
+        return try {
+            val ld = LocalDate.parse(dateString, LOCAL_DATE)
+            Date.from(ld.atStartOfDay(DEFAULT_ZONE).toInstant())
+        } catch (_: DateTimeParseException) {
+            null
+        }
     }
 }

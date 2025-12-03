@@ -1,13 +1,12 @@
 package io.github.sonicalgo.upstox.model.request
 
 import com.google.gson.annotations.SerializedName
-import io.github.sonicalgo.upstox.model.enums.CandleInterval
 import io.github.sonicalgo.upstox.model.enums.CandleUnit
 
 /**
- * Parameters for getting historical candle data (V2 API - Deprecated).
+ * Parameters for getting historical candle data.
  *
- * Retrieves OHLC candle data for a specified instrument and time range.
+ * Provides flexible interval options from minutes to months.
  *
  * Example usage:
  * ```kotlin
@@ -15,72 +14,12 @@ import io.github.sonicalgo.upstox.model.enums.CandleUnit
  *
  * val params = HistoricalCandleParams(
  *     instrumentKey = "NSE_EQ|INE848E01016",
- *     interval = CandleInterval.DAY,
- *     toDate = "2023-11-13",
- *     fromDate = "2023-11-01"
- * )
- * val candles = histApi.getHistoricalCandle(params)
- * ```
- *
- * @property instrumentKey The unique identifier for the financial instrument
- * @property interval Timeframe options: 1minute, 30minute, day, week, month
- * @property toDate End date (inclusive) in YYYY-MM-DD format
- * @property fromDate Start date in YYYY-MM-DD format (optional)
- * @see <a href="https://upstox.com/developer/api-documentation/get-historical-candle-data">Historical Candle API</a>
- */
-data class HistoricalCandleParams(
-    @SerializedName("instrument_key")
-    val instrumentKey: String,
-    val interval: CandleInterval,
-    @SerializedName("to_date")
-    val toDate: String,
-    @SerializedName("from_date")
-    val fromDate: String? = null
-)
-
-/**
- * Parameters for getting intraday candle data (V2 API - Deprecated).
- *
- * Retrieves intraday OHLC candle data for the current day.
- *
- * Example usage:
- * ```kotlin
- * val histApi = upstox.getHistoricalDataApi()
- *
- * val params = IntradayCandleParams(
- *     instrumentKey = "NSE_EQ|INE848E01016",
- *     interval = CandleInterval.ONE_MINUTE
- * )
- * val candles = histApi.getIntradayCandle(params)
- * ```
- *
- * @property instrumentKey The unique identifier for the financial instrument
- * @property interval Timeframe: 1minute or 30minute
- * @see <a href="https://upstox.com/developer/api-documentation/get-intra-day-candle-data">Intraday Candle API</a>
- */
-data class IntradayCandleParams(
-    @SerializedName("instrument_key")
-    val instrumentKey: String,
-    val interval: CandleInterval
-)
-
-/**
- * Parameters for getting historical candle data (V3 API).
- *
- * The V3 API provides more flexible interval options.
- *
- * Example usage:
- * ```kotlin
- * val histApi = upstox.getHistoricalDataApi()
- *
- * val params = HistoricalCandleV3Params(
- *     instrumentKey = "NSE_EQ|INE848E01016",
  *     unit = CandleUnit.MINUTES,
  *     interval = 15,
  *     toDate = "2025-01-02",
  *     fromDate = "2025-01-01"
  * )
- * val candles = histApi.getHistoricalCandleV3(params)
+ * val candles = histApi.getHistoricalCandle(params)
  * ```
  *
  * Interval ranges by unit:
@@ -95,9 +34,9 @@ data class IntradayCandleParams(
  * @property interval Numeric interval value (valid ranges depend on unit)
  * @property toDate End date (inclusive) in YYYY-MM-DD format
  * @property fromDate Start date in YYYY-MM-DD format (optional)
- * @see <a href="https://upstox.com/developer/api-documentation/v3/get-historical-candle-data">Historical Candle V3 API</a>
+ * @see <a href="https://upstox.com/developer/api-documentation/v3/get-historical-candle-data">Historical Candle API</a>
  */
-data class HistoricalCandleV3Params(
+data class HistoricalCandleParams(
     @SerializedName("instrument_key")
     val instrumentKey: String,
     val unit: CandleUnit,
@@ -109,26 +48,28 @@ data class HistoricalCandleV3Params(
 )
 
 /**
- * Parameters for getting intraday candle data (V3 API).
+ * Parameters for getting intraday candle data.
+ *
+ * Returns candle data for the current trading day.
  *
  * Example usage:
  * ```kotlin
  * val histApi = upstox.getHistoricalDataApi()
  *
- * val params = IntradayCandleV3Params(
+ * val params = IntradayCandleParams(
  *     instrumentKey = "NSE_EQ|INE848E01016",
  *     unit = CandleUnit.MINUTES,
  *     interval = 5
  * )
- * val candles = histApi.getIntradayCandleV3(params)
+ * val candles = histApi.getIntradayCandle(params)
  * ```
  *
  * @property instrumentKey The unique identifier for the financial instrument
  * @property unit Timeframe unit: minutes, hours, or days
  * @property interval Numeric interval value (minutes: 1-300, hours: 1-5, days: 1)
- * @see <a href="https://upstox.com/developer/api-documentation/v3/get-intra-day-candle-data">Intraday Candle V3 API</a>
+ * @see <a href="https://upstox.com/developer/api-documentation/v3/get-intra-day-candle-data">Intraday Candle API</a>
  */
-data class IntradayCandleV3Params(
+data class IntradayCandleParams(
     @SerializedName("instrument_key")
     val instrumentKey: String,
     val unit: CandleUnit,

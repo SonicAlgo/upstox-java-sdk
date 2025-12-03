@@ -77,7 +77,7 @@ class MarketQuoteApi private constructor() {
     }
 
     /**
-     * Gets OHLC quotes (V3 API).
+     * Gets OHLC quotes.
      *
      * Returns OHLC data with both previous and live candle information.
      *
@@ -85,7 +85,7 @@ class MarketQuoteApi private constructor() {
      * ```kotlin
      * val marketQuoteApi = upstox.getMarketQuoteApi()
      *
-     * val quotes = marketQuoteApi.getOhlcQuoteV3(
+     * val quotes = marketQuoteApi.getOhlcQuote(
      *     instrumentKeys = listOf("NSE_EQ|INE669E01016"),
      *     interval = OhlcInterval.ONE_DAY
      * )
@@ -96,15 +96,15 @@ class MarketQuoteApi private constructor() {
      * }
      * ```
      *
-     * @param instrumentKeys List of instrument keys
+     * @param instrumentKeys List of instrument keys (max 500)
      * @param interval OHLC interval (1d, I1, I30)
      * @return Map of instrument key to [OhlcQuote]
      * @throws UpstoxApiException if retrieval fails
      *
-     * @see <a href="https://upstox.com/developer/api-documentation/get-market-quote-ohlc-v3">OHLC Quote V3 API</a>
+     * @see <a href="https://upstox.com/developer/api-documentation/get-market-quote-ohlc-v3">OHLC Quote API</a>
      */
-    fun getOhlcQuoteV3(instrumentKeys: List<String>, interval: OhlcInterval): Map<String, OhlcQuote> {
-        Validators.validateListSize(instrumentKeys, MAX_QUOTE_INSTRUMENTS, "getOhlcQuoteV3")
+    fun getOhlcQuote(instrumentKeys: List<String>, interval: OhlcInterval): Map<String, OhlcQuote> {
+        Validators.validateListSize(instrumentKeys, MAX_QUOTE_INSTRUMENTS, "getOhlcQuote")
 
         val queryParams = mapOf(
             "instrument_key" to instrumentKeys.joinToString(","),
@@ -119,33 +119,7 @@ class MarketQuoteApi private constructor() {
     }
 
     /**
-     * Gets OHLC quotes (V2 API - Deprecated).
-     *
-     * Use [getOhlcQuoteV3] for new implementations.
-     *
-     * @param instrumentKeys List of instrument keys (max 500)
-     * @param interval OHLC interval
-     * @return Map of instrument key to [OhlcQuote]
-     * @throws UpstoxApiException if retrieval fails
-     *
-     * @see <a href="https://upstox.com/developer/api-documentation/get-market-quote-ohlc">OHLC Quote API (Deprecated)</a>
-     */
-    @Deprecated("Use getOhlcQuoteV3 instead", ReplaceWith("getOhlcQuoteV3(instrumentKeys, interval)"))
-    fun getOhlcQuote(instrumentKeys: List<String>, interval: OhlcInterval): Map<String, OhlcQuote> {
-        val queryParams = mapOf(
-            "instrument_key" to instrumentKeys.joinToString(","),
-            "interval" to interval.toString()
-        )
-        val rawResponse = ApiClient.getRaw(
-            endpoint = Endpoints.GET_OHLC_QUOTE,
-            queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V2
-        )
-        return parseMapResponse(rawResponse)
-    }
-
-    /**
-     * Gets LTP quotes (V3 API).
+     * Gets LTP quotes.
      *
      * Returns last traded price along with volume and previous close.
      *
@@ -153,48 +127,26 @@ class MarketQuoteApi private constructor() {
      * ```kotlin
      * val marketQuoteApi = upstox.getMarketQuoteApi()
      *
-     * val quotes = marketQuoteApi.getLtpV3(listOf("NSE_EQ|INE669E01016"))
+     * val quotes = marketQuoteApi.getLtp(listOf("NSE_EQ|INE669E01016"))
      * quotes.forEach { (key, quote) ->
      *     println("$key: LTP=${quote.lastPrice}, Volume=${quote.volume}, PrevClose=${quote.cp}")
      * }
      * ```
      *
-     * @param instrumentKeys List of instrument keys
+     * @param instrumentKeys List of instrument keys (max 500)
      * @return Map of instrument key to [LtpQuote]
      * @throws UpstoxApiException if retrieval fails
      *
-     * @see <a href="https://upstox.com/developer/api-documentation/ltp-v3">LTP V3 API</a>
+     * @see <a href="https://upstox.com/developer/api-documentation/ltp-v3">LTP API</a>
      */
-    fun getLtpV3(instrumentKeys: List<String>): Map<String, LtpQuote> {
-        Validators.validateListSize(instrumentKeys, MAX_QUOTE_INSTRUMENTS, "getLtpV3")
+    fun getLtp(instrumentKeys: List<String>): Map<String, LtpQuote> {
+        Validators.validateListSize(instrumentKeys, MAX_QUOTE_INSTRUMENTS, "getLtp")
 
         val queryParams = mapOf("instrument_key" to instrumentKeys.joinToString(","))
         val rawResponse = ApiClient.getRaw(
             endpoint = Endpoints.GET_LTP,
             queryParams = queryParams,
             baseUrl = UpstoxConstants.BASE_URL_V3
-        )
-        return parseMapResponse(rawResponse)
-    }
-
-    /**
-     * Gets LTP quotes (V2 API - Deprecated).
-     *
-     * Use [getLtpV3] for new implementations.
-     *
-     * @param instrumentKeys List of instrument keys (max 500)
-     * @return Map of instrument key to [LtpQuote]
-     * @throws UpstoxApiException if retrieval fails
-     *
-     * @see <a href="https://upstox.com/developer/api-documentation/ltp">LTP API (Deprecated)</a>
-     */
-    @Deprecated("Use getLtpV3 instead", ReplaceWith("getLtpV3(instrumentKeys)"))
-    fun getLtp(instrumentKeys: List<String>): Map<String, LtpQuote> {
-        val queryParams = mapOf("instrument_key" to instrumentKeys.joinToString(","))
-        val rawResponse = ApiClient.getRaw(
-            endpoint = Endpoints.GET_LTP,
-            queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V2
         )
         return parseMapResponse(rawResponse)
     }

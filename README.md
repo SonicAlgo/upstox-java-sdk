@@ -11,13 +11,13 @@ Unofficial Kotlin/Java SDK for the [Upstox](https://upstox.com) trading platform
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("io.github.sonicalgo:upstox-java-sdk:1.0.0")
+implementation("io.github.sonicalgo:upstox-java-sdk:1.1.0")
 ```
 
 ### Gradle (Groovy)
 
 ```groovy
-implementation 'io.github.sonicalgo:upstox-java-sdk:1.0.0'
+implementation 'io.github.sonicalgo:upstox-java-sdk:1.1.0'
 ```
 
 ### Maven
@@ -26,7 +26,7 @@ implementation 'io.github.sonicalgo:upstox-java-sdk:1.0.0'
 <dependency>
     <groupId>io.github.sonicalgo</groupId>
     <artifactId>upstox-java-sdk</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
 </dependency>
 ```
 
@@ -50,7 +50,7 @@ UserProfile profile = upstox.getUserApi().getProfile();
 System.out.println("Welcome, " + profile.getUserName());
 
 // Get market quote
-Map<String, LtpQuote> quotes = upstox.getMarketQuoteApi().getLtpV3(
+Map<String, LtpQuote> quotes = upstox.getMarketQuoteApi().getLtp(
     Arrays.asList("NSE_EQ|INE669E01016")
 );
 System.out.println("LTP: " + quotes.get("NSE_EQ|INE669E01016").getLtp());
@@ -91,7 +91,7 @@ val profile = upstox.getUserApi().getProfile()
 println("Welcome, ${profile.userName}")
 
 // Get market quote
-val quotes = upstox.getMarketQuoteApi().getLtpV3(listOf("NSE_EQ|INE669E01016"))
+val quotes = upstox.getMarketQuoteApi().getLtp(listOf("NSE_EQ|INE669E01016"))
 println("LTP: ${quotes["NSE_EQ|INE669E01016"]?.ltp}")
 
 // Place an order
@@ -459,8 +459,7 @@ for (holding in holdings) {
 #### LTP (Last Traded Price)
 
 ```kotlin
-// V3 API (recommended)
-val ltp = upstox.getMarketQuoteApi().getLtpV3(listOf(
+val ltp = upstox.getMarketQuoteApi().getLtp(listOf(
     "NSE_EQ|INE669E01016",
     "NSE_EQ|INE002A01018"
 ))
@@ -471,10 +470,9 @@ println("LTP: ${ltp["NSE_EQ|INE669E01016"]?.ltp}")
 #### OHLC Quotes
 
 ```kotlin
-// V3 API (recommended)
-val ohlc = upstox.getMarketQuoteApi().getOhlcQuoteV3(
+val ohlc = upstox.getMarketQuoteApi().getOhlcQuote(
     instrumentKeys = listOf("NSE_EQ|INE669E01016"),
-    interval = OhlcInterval.ONE_DAY  // ONE_DAY, INTRADAY_1MIN, INTRADAY_30MIN
+    interval = OhlcInterval.ONE_DAY  // ONE_DAY, ONE_MINUTE, THIRTY_MINUTE
 )
 ```
 
@@ -504,11 +502,10 @@ val greeks = upstox.getMarketQuoteApi().getOptionGreeks(listOf("NSE_FO|43885"))
 ```kotlin
 val histApi = upstox.getHistoricalDataApi()
 
-// V3 API (recommended)
-val candles = histApi.getHistoricalCandleV3(HistoricalCandleV3Params(
+val candles = histApi.getHistoricalCandle(HistoricalCandleParams(
     instrumentKey = "NSE_EQ|INE848E01016",
     unit = CandleUnit.MINUTES,  // MINUTES, HOURS, DAYS, WEEKS, MONTHS
-    interval = 15,               // 1-1440 for minutes
+    interval = 15,               // 1-300 for minutes
     toDate = "2025-01-15",
     fromDate = "2025-01-01"
 ))
@@ -530,7 +527,7 @@ for (candle in candles) {
 
 ```kotlin
 // Current trading day data
-val intraday = upstox.getHistoricalDataApi().getIntradayCandleV3(IntradayCandleV3Params(
+val intraday = upstox.getHistoricalDataApi().getIntradayCandle(IntradayCandleParams(
     instrumentKey = "NSE_EQ|INE848E01016",
     unit = CandleUnit.MINUTES,
     interval = 1

@@ -245,38 +245,7 @@ enum class GttRuleStatus {
 }
 
 /**
- * Historical candle interval options for V2 API.
- *
- * Used with the deprecated V2 historical candle APIs.
- */
-enum class CandleInterval {
-    /** 1 minute candles */
-    @SerializedName("1minute")
-    ONE_MINUTE,
-    /** 30 minute candles */
-    @SerializedName("30minute")
-    THIRTY_MINUTE,
-    /** Daily candles */
-    @SerializedName("day")
-    DAY,
-    /** Weekly candles */
-    @SerializedName("week")
-    WEEK,
-    /** Monthly candles */
-    @SerializedName("month")
-    MONTH;
-
-    override fun toString(): String = when (this) {
-        ONE_MINUTE -> "1minute"
-        THIRTY_MINUTE -> "30minute"
-        DAY -> "day"
-        WEEK -> "week"
-        MONTH -> "month"
-    }
-}
-
-/**
- * Time unit for V3 historical candle API.
+ * Time unit for historical candle API.
  */
 enum class CandleUnit {
     /** Minutes timeframe */
