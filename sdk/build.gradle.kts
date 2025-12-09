@@ -1,19 +1,19 @@
 plugins {
-    kotlin("jvm")
+    kotlin("jvm") version "2.2.21"
     id("com.google.protobuf") version "0.9.5"
     id("com.vanniktech.maven.publish") version "0.35.0"
     signing
 }
 
 group = "io.github.sonicalgo"
-version = "1.2.0"
+version = "1.2.1"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(project(":core"))
+    implementation("io.github.sonicalgo:trading-core:1.0.0")
     implementation("com.squareup.okhttp3:okhttp:5.3.0")
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1")
@@ -57,7 +57,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.sonicalgo",
         artifactId = "upstox-java-sdk",
-        version = "1.2.0",
+        version = "1.2.1",
     )
 
     pom {
