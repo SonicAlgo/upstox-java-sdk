@@ -1,6 +1,9 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.sonicalgo.upstox.model.enums.Exchange
+import io.github.sonicalgo.upstox.model.enums.OrderType
+import io.github.sonicalgo.upstox.model.enums.Product
 
 /**
  * Response from the Get Token API.
@@ -9,11 +12,11 @@ import com.google.gson.annotations.SerializedName
  *
  * @property email User's email address
  * @property exchanges List of enabled exchanges (NSE, NFO, BSE, CDS, BFO, BCD)
- * @property products Product types enabled (I, D, CO, MTF)
+ * @property products Product types enabled (INTRADAY, DELIVERY, COVER_ORDER, MTF)
  * @property broker Broker identifier
  * @property userId Unique user identifier (UCC)
  * @property userName User's registered name
- * @property orderTypes Enabled order types (MARKET, LIMIT, SL, SL-M)
+ * @property orderTypes Enabled order types (MARKET, LIMIT, SL, SL_M)
  * @property userType User registration role (typically "individual")
  * @property poa Power of attorney authorization status
  * @property isActive Account active status
@@ -22,24 +25,40 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/get-token">Get Token API</a>
  */
 data class TokenResponse(
+    @JsonProperty("email")
     val email: String,
-    val exchanges: List<String>,
-    val products: List<String>,
+
+    @JsonProperty("exchanges")
+    val exchanges: List<Exchange>,
+
+    @JsonProperty("products")
+    val products: List<Product>,
+
+    @JsonProperty("broker")
     val broker: String,
-    @SerializedName("user_id")
+
+    @JsonProperty("user_id")
     val userId: String,
-    @SerializedName("user_name")
+
+    @JsonProperty("user_name")
     val userName: String,
-    @SerializedName("order_types")
-    val orderTypes: List<String>,
-    @SerializedName("user_type")
+
+    @JsonProperty("order_types")
+    val orderTypes: List<OrderType>,
+
+    @JsonProperty("user_type")
     val userType: String,
+
+    @JsonProperty("poa")
     val poa: Boolean,
-    @SerializedName("is_active")
+
+    @JsonProperty("is_active")
     val isActive: Boolean,
-    @SerializedName("access_token")
+
+    @JsonProperty("access_token")
     val accessToken: String,
-    @SerializedName("extended_token")
+
+    @JsonProperty("extended_token")
     val extendedToken: String? = null
 )
 
@@ -53,9 +72,10 @@ data class TokenResponse(
  * @see <a href="https://upstox.com/developer/api-documentation/access-token-request">Access Token Request API</a>
  */
 data class AccessTokenRequestResponse(
-    @SerializedName("authorization_expiry")
+    @JsonProperty("authorization_expiry")
     val authorizationExpiry: String,
-    @SerializedName("notifier_url")
+
+    @JsonProperty("notifier_url")
     val notifierUrl: String
 )
 
@@ -66,5 +86,6 @@ data class AccessTokenRequestResponse(
  * @see <a href="https://upstox.com/developer/api-documentation/logout">Logout API</a>
  */
 data class LogoutResponse(
+    @JsonProperty("status")
     val status: Boolean
 )

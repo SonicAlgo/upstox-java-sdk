@@ -3,6 +3,7 @@ package io.github.sonicalgo.upstox.api
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.UpstoxConstants
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
+import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.response.OptionChainEntry
 import io.github.sonicalgo.upstox.model.response.OptionContract
 
@@ -13,16 +14,16 @@ import io.github.sonicalgo.upstox.model.response.OptionContract
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val optionChainApi = upstox.getOptionChainApi()
  *
  * // Get option contracts
- * val contracts = upstox.getOptionChainApi().getOptionContracts("NSE_INDEX|Nifty 50")
+ * val contracts = optionChainApi.getOptionContracts("NSE_INDEX|Nifty 50")
  * contracts.forEach { contract ->
  *     println("${contract.tradingSymbol}: Strike=${contract.strikePrice} Type=${contract.instrumentType}")
  * }
  *
  * // Get option chain
- * val chain = upstox.getOptionChainApi().getOptionChain("NSE_INDEX|Nifty 50", "2024-03-28")
+ * val chain = optionChainApi.getOptionChain("NSE_INDEX|Nifty 50", "2024-03-28")
  * chain.forEach { entry ->
  *     println("Strike: ${entry.strikePrice}")
  *     println("  Call: LTP=${entry.callOptions.marketData.ltp} IV=${entry.callOptions.optionGreeks.iv}")
@@ -32,7 +33,7 @@ import io.github.sonicalgo.upstox.model.response.OptionContract
  *
  * @see <a href="https://upstox.com/developer/api-documentation/get-option-contracts">Option Contracts API</a>
  */
-class OptionChainApi private constructor() {
+class OptionChainApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Gets option contracts for an underlying instrument.
@@ -74,11 +75,12 @@ class OptionChainApi private constructor() {
         val queryParams = mutableMapOf<String, String?>("instrument_key" to instrumentKey)
         expiryDate?.let { queryParams["expiry_date"] = it }
 
-        return ApiClient.get(
+        val response: UpstoxResponse<List<OptionContract>> = apiClient.get(
             endpoint = Endpoints.GET_OPTION_CONTRACTS,
             queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -128,19 +130,16 @@ class OptionChainApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-pc-option-chain">Option Chain API</a>
      */
     fun getOptionChain(instrumentKey: String, expiryDate: String): List<OptionChainEntry> {
-        return ApiClient.get(
+        val response: UpstoxResponse<List<OptionChainEntry>> = apiClient.get(
             endpoint = Endpoints.GET_OPTION_CHAIN,
             queryParams = mapOf("instrument_key" to instrumentKey, "expiry_date" to expiryDate),
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
         const val GET_OPTION_CONTRACTS = "/option/contract"
         const val GET_OPTION_CHAIN = "/option/chain"
-    }
-
-    companion object {
-        internal val instance by lazy { OptionChainApi() }
     }
 }

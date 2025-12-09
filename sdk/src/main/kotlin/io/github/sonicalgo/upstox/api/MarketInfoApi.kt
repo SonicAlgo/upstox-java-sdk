@@ -3,6 +3,7 @@ package io.github.sonicalgo.upstox.api
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.UpstoxConstants
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
+import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.response.MarketHoliday
 import io.github.sonicalgo.upstox.model.response.MarketStatusResponse
 import io.github.sonicalgo.upstox.model.response.MarketTiming
@@ -14,22 +15,22 @@ import io.github.sonicalgo.upstox.model.response.MarketTiming
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val marketInfoApi = upstox.getMarketInfoApi()
  *
  * // Get all holidays for the year
- * val holidays = upstox.getMarketInfoApi().getMarketHolidays()
+ * val holidays = marketInfoApi.getMarketHolidays()
  * holidays.forEach { holiday ->
  *     println("${holiday.date}: ${holiday.description} (${holiday.holidayType})")
  * }
  *
  * // Get market status
- * val status = upstox.getMarketInfoApi().getMarketStatus("NSE")
+ * val status = marketInfoApi.getMarketStatus("NSE")
  * println("NSE Status: ${status.status}")
  * ```
  *
  * @see <a href="https://upstox.com/developer/api-documentation/get-market-holidays">Market Holidays API</a>
  */
-class MarketInfoApi private constructor() {
+class MarketInfoApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Gets all market holidays.
@@ -58,7 +59,11 @@ class MarketInfoApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-market-holidays">Market Holidays API</a>
      */
     fun getMarketHolidays(): List<MarketHoliday> {
-        return ApiClient.get(endpoint = Endpoints.GET_MARKET_HOLIDAYS, baseUrl = UpstoxConstants.BASE_URL_V2)
+        val response: UpstoxResponse<List<MarketHoliday>> = apiClient.get(
+            endpoint = Endpoints.GET_MARKET_HOLIDAYS,
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
+        )
+        return response.dataOrThrow()
     }
 
     /**
@@ -81,11 +86,11 @@ class MarketInfoApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-market-holidays">Market Holidays API</a>
      */
     fun getMarketHoliday(date: String): MarketHoliday? {
-        val holidays: List<MarketHoliday> = ApiClient.get(
+        val response: UpstoxResponse<List<MarketHoliday>> = apiClient.get(
             endpoint = "${Endpoints.GET_MARKET_HOLIDAYS}/$date",
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
         )
-        return holidays.firstOrNull()
+        return response.dataOrThrow().firstOrNull()
     }
 
     /**
@@ -110,7 +115,11 @@ class MarketInfoApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-market-timings">Market Timings API</a>
      */
     fun getMarketTimings(date: String): List<MarketTiming> {
-        return ApiClient.get(endpoint = "${Endpoints.GET_MARKET_TIMINGS_BASE}/$date", baseUrl = UpstoxConstants.BASE_URL_V2)
+        val response: UpstoxResponse<List<MarketTiming>> = apiClient.get(
+            endpoint = "${Endpoints.GET_MARKET_TIMINGS_BASE}/$date",
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
+        )
+        return response.dataOrThrow()
     }
 
     /**
@@ -143,16 +152,16 @@ class MarketInfoApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-market-status">Market Status API</a>
      */
     fun getMarketStatus(exchange: String): MarketStatusResponse {
-        return ApiClient.get(endpoint = "${Endpoints.GET_MARKET_STATUS_BASE}/$exchange", baseUrl = UpstoxConstants.BASE_URL_V2)
+        val response: UpstoxResponse<MarketStatusResponse> = apiClient.get(
+            endpoint = "${Endpoints.GET_MARKET_STATUS_BASE}/$exchange",
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
+        )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
         const val GET_MARKET_HOLIDAYS = "/market/holidays"
         const val GET_MARKET_TIMINGS_BASE = "/market/timings"
         const val GET_MARKET_STATUS_BASE = "/market/status"
-    }
-
-    companion object {
-        internal val instance by lazy { MarketInfoApi() }
     }
 }

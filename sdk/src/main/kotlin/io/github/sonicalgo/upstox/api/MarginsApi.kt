@@ -3,8 +3,10 @@ package io.github.sonicalgo.upstox.api
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.UpstoxConstants
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
+import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.request.MarginParams
 import io.github.sonicalgo.upstox.model.response.MarginResponse
+import io.github.sonicalgo.upstox.validation.Validators
 
 /**
  * API module for margin calculations.
@@ -13,16 +15,16 @@ import io.github.sonicalgo.upstox.model.response.MarginResponse
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val marginsApi = upstox.getMarginsApi()
  *
  * // Calculate margin requirements
- * val margin = upstox.getMarginsApi().getMargin(MarginParams(
+ * val margin = marginsApi.getMargin(MarginParams(
  *     instruments = listOf(
  *         MarginInstrument(
  *             instrumentKey = "NSE_EQ|INE669E01016",
  *             quantity = 1,
  *             transactionType = TransactionType.BUY,
- *             product = Product.D
+ *             product = Product.DELIVERY
  *         )
  *     )
  * ))
@@ -32,7 +34,7 @@ import io.github.sonicalgo.upstox.model.response.MarginResponse
  * @see <a href="https://upstox.com/developer/api-documentation/margin">Margin API</a>
  * @see ChargesApi for brokerage calculations
  */
-class MarginsApi private constructor() {
+class MarginsApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Calculates the margin required for placing orders.
@@ -56,13 +58,13 @@ class MarginsApi private constructor() {
      *             instrumentKey = "NSE_FO|NIFTY24JANFUT",
      *             quantity = 50,
      *             transactionType = TransactionType.BUY,
-     *             product = Product.I
+     *             product = Product.INTRADAY
      *         ),
      *         MarginInstrument(
      *             instrumentKey = "NSE_FO|NIFTY24JAN22000CE",
      *             quantity = 50,
      *             transactionType = TransactionType.SELL,
-     *             product = Product.I
+     *             product = Product.INTRADAY
      *         )
      *     )
      * ))
@@ -77,11 +79,14 @@ class MarginsApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/margin">Margin API</a>
      */
     fun getMargin(params: MarginParams): MarginResponse {
-        return ApiClient.post(
+        Validators.validateListSize(params.instruments, MAX_MARGIN_INSTRUMENTS, "getMargin")
+
+        val response: UpstoxResponse<MarginResponse> = apiClient.post(
             endpoint = Endpoints.GET_MARGIN,
             body = params,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
@@ -89,6 +94,7 @@ class MarginsApi private constructor() {
     }
 
     companion object {
-        internal val instance by lazy { MarginsApi() }
+        /** Maximum number of instruments for margin calculation */
+        private const val MAX_MARGIN_INSTRUMENTS = 20
     }
 }

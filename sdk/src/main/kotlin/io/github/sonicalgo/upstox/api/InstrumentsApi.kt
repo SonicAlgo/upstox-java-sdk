@@ -1,11 +1,12 @@
 package io.github.sonicalgo.upstox.api
 
-import com.google.gson.reflect.TypeToken
+import com.fasterxml.jackson.module.kotlin.readValue
+import io.github.sonicalgo.core.client.HttpClient
 import io.github.sonicalgo.upstox.config.ApiClient
-import io.github.sonicalgo.upstox.config.OkHttpClientFactory
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
 import io.github.sonicalgo.upstox.model.instrument.Instrument
 import io.github.sonicalgo.upstox.model.instrument.InstrumentDownloadType
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.InputStreamReader
 import java.util.zip.GZIPInputStream
@@ -26,16 +27,16 @@ import java.util.zip.GZIPInputStream
  *
  * ## Example usage
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val instrumentsApi = upstox.getInstrumentsApi()
  *
  * // Get all NSE instruments
- * val nseInstruments = upstox.getInstrumentsApi().getInstruments(InstrumentDownloadType.NSE)
+ * val nseInstruments = instrumentsApi.getInstruments(InstrumentDownloadType.NSE)
  *
  * // Get all instruments across all exchanges
- * val allInstruments = upstox.getInstrumentsApi().getInstruments(InstrumentDownloadType.COMPLETE)
+ * val allInstruments = instrumentsApi.getInstruments(InstrumentDownloadType.COMPLETE)
  *
  * // Get MTF eligible instruments
- * val mtfInstruments = upstox.getInstrumentsApi().getInstruments(InstrumentDownloadType.MTF)
+ * val mtfInstruments = instrumentsApi.getInstruments(InstrumentDownloadType.MTF)
  *
  * // Filter specific instruments
  * val niftyOptions = nseInstruments.filter {
@@ -45,7 +46,7 @@ import java.util.zip.GZIPInputStream
  *
  * @see <a href="https://upstox.com/developer/api-documentation/instruments">Instruments API</a>
  */
-class InstrumentsApi private constructor() {
+class InstrumentsApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Downloads and parses instruments for the specified type.
@@ -77,10 +78,7 @@ class InstrumentsApi private constructor() {
      */
     fun getInstruments(type: InstrumentDownloadType): List<Instrument> {
         val url = INSTRUMENT_URLS[type]
-            ?: throw UpstoxApiException(
-                message = "Unknown instrument type: $type",
-                httpStatusCode = 0
-            )
+            ?: throw UpstoxApiException("Unknown instrument type: $type", null)
 
         return downloadAndParse(url)
     }
@@ -104,10 +102,7 @@ class InstrumentsApi private constructor() {
      */
     fun getInstrumentsUrl(type: InstrumentDownloadType): String {
         return INSTRUMENT_URLS[type]
-            ?: throw UpstoxApiException(
-                message = "Unknown instrument type: $type",
-                httpStatusCode = 0
-            )
+            ?: throw UpstoxApiException("Unknown instrument type: $type", null)
     }
 
     /**
@@ -194,47 +189,41 @@ class InstrumentsApi private constructor() {
     fun getBseMisInstruments(): List<Instrument> = getInstruments(InstrumentDownloadType.BSE_MIS)
 
     private fun downloadAndParse(url: String): List<Instrument> {
-        val request = Request.Builder()
-            .url(url)
-            .build()
+        val httpClient = OkHttpClient.Builder().build()
+        try {
+            val request = Request.Builder()
+                .url(url)
+                .build()
 
-        val response = try {
-            OkHttpClientFactory.httpClient.newCall(request).execute()
-        } catch (e: Exception) {
-            throw UpstoxApiException(
-                message = "Failed to download instruments from $url: ${e.message}",
-                httpStatusCode = 0,
-                cause = e
-            )
-        }
-
-        if (!response.isSuccessful) {
-            val statusCode = response.code
-            response.close()
-            throw UpstoxApiException(
-                message = "Failed to download instruments: HTTP $statusCode - ${response.message}",
-                httpStatusCode = statusCode
-            )
-        }
-
-        return try {
-            val inputStream = response.body.byteStream()
-            GZIPInputStream(inputStream).use { gzipStream ->
-                InputStreamReader(gzipStream, Charsets.UTF_8).use { reader ->
-                    val listType = object : TypeToken<List<Instrument>>() {}.type
-                    ApiClient.gson.fromJson(reader, listType)
-                }
+            val response = try {
+                httpClient.newCall(request).execute()
+            } catch (e: Exception) {
+                throw UpstoxApiException("Failed to download instruments from $url: ${e.message}", null, e)
             }
-        } catch (e: UpstoxApiException) {
-            throw e
-        } catch (e: Exception) {
-            throw UpstoxApiException(
-                message = "Failed to parse instruments from $url: ${e.message}",
-                httpStatusCode = 0,
-                cause = e
-            )
+
+            if (!response.isSuccessful) {
+                val statusCode = response.code
+                response.close()
+                throw UpstoxApiException("Failed to download instruments: HTTP $statusCode - ${response.message}", statusCode)
+            }
+
+            return try {
+                val inputStream = response.body.byteStream()
+                GZIPInputStream(inputStream).use { gzipStream ->
+                    InputStreamReader(gzipStream, Charsets.UTF_8).use { reader ->
+                        HttpClient.objectMapper.readValue<List<Instrument>>(reader)
+                    }
+                }
+            } catch (e: UpstoxApiException) {
+                throw e
+            } catch (e: Exception) {
+                throw UpstoxApiException("Failed to parse instruments from $url: ${e.message}", null, e)
+            } finally {
+                response.close()
+            }
         } finally {
-            response.close()
+            httpClient.dispatcher.executorService.shutdown()
+            httpClient.connectionPool.evictAll()
         }
     }
 
@@ -251,7 +240,5 @@ class InstrumentsApi private constructor() {
             InstrumentDownloadType.NSE_MIS to "$BASE_URL/NSE_MIS.json.gz",
             InstrumentDownloadType.BSE_MIS to "$BASE_URL/BSE_MIS.json.gz"
         )
-
-        internal val instance by lazy { InstrumentsApi() }
     }
 }

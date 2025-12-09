@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.request
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.sonicalgo.upstox.model.enums.Product
 import io.github.sonicalgo.upstox.model.enums.TransactionType
 
@@ -16,8 +16,8 @@ import io.github.sonicalgo.upstox.model.enums.TransactionType
  *
  * val params = ConvertPositionParams(
  *     instrumentToken = "NSE_EQ|INE528G01035",
- *     newProduct = Product.D,
- *     oldProduct = Product.I,
+ *     newProduct = Product.DELIVERY,
+ *     oldProduct = Product.INTRADAY,
  *     transactionType = TransactionType.BUY,
  *     quantity = 1
  * )
@@ -25,20 +25,25 @@ import io.github.sonicalgo.upstox.model.enums.TransactionType
  * ```
  *
  * @property instrumentToken Key identifying the instrument
- * @property newProduct Target product type: I (Intraday) or D (Delivery)
- * @property oldProduct Current product type: I (Intraday) or D (Delivery)
+ * @property newProduct Target product type: INTRADAY or DELIVERY
+ * @property oldProduct Current product type: INTRADAY or DELIVERY
  * @property transactionType Trade direction: BUY or SELL
  * @property quantity Number of units to convert
  * @see <a href="https://upstox.com/developer/api-documentation/convert-positions">Convert Positions API</a>
  */
 data class ConvertPositionParams(
-    @SerializedName("instrument_token")
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
-    @SerializedName("new_product")
+
+    @JsonProperty("new_product")
     val newProduct: Product,
-    @SerializedName("old_product")
+
+    @JsonProperty("old_product")
     val oldProduct: Product,
-    @SerializedName("transaction_type")
+
+    @JsonProperty("transaction_type")
     val transactionType: TransactionType,
+
+    @JsonProperty("quantity")
     val quantity: Int
 )

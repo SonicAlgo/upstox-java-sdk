@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.request
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.sonicalgo.upstox.model.enums.*
 
 /**
@@ -15,7 +15,7 @@ import io.github.sonicalgo.upstox.model.enums.*
  * val params = PlaceGttOrderParams(
  *     type = GttType.SINGLE,
  *     quantity = 1,
- *     product = Product.D,
+ *     product = Product.DELIVERY,
  *     instrumentToken = "NSE_EQ|INE669E01016",
  *     transactionType = TransactionType.BUY,
  *     rules = listOf(
@@ -34,33 +34,42 @@ import io.github.sonicalgo.upstox.model.enums.*
  * val params = PlaceGttOrderParams(
  *     type = GttType.MULTIPLE,
  *     quantity = 1,
- *     product = Product.D,
+ *     product = Product.DELIVERY,
  *     instrumentToken = "NSE_EQ|INE669E01016",
  *     transactionType = TransactionType.BUY,
  *     rules = listOf(
  *         GttRule(strategy = GttStrategy.ENTRY, triggerType = GttTriggerType.ABOVE, triggerPrice = 100.0),
  *         GttRule(strategy = GttStrategy.TARGET, triggerType = GttTriggerType.IMMEDIATE, triggerPrice = 110.0),
- *         GttRule(strategy = GttStrategy.STOPLOSS, triggerType = GttTriggerType.IMMEDIATE, triggerPrice = 95.0)
+ *         GttRule(strategy = GttStrategy.STOP_LOSS, triggerType = GttTriggerType.IMMEDIATE, triggerPrice = 95.0)
  *     )
  * )
  * ```
  *
  * @property type GTT order type: SINGLE (1 rule) or MULTIPLE (2-3 rules)
  * @property quantity Order quantity
- * @property product Product type: I (Intraday), D (Delivery), or MTF
+ * @property product Product type: INTRADAY, DELIVERY, or MTF
  * @property instrumentToken Instrument key identifier
  * @property transactionType Transaction type: BUY or SELL
- * @property rules List of GTT rules (SINGLE: 1 ENTRY, MULTIPLE: ENTRY + TARGET/STOPLOSS)
+ * @property rules List of GTT rules (SINGLE: 1 ENTRY, MULTIPLE: ENTRY + TARGET/STOP_LOSS)
  * @see <a href="https://upstox.com/developer/api-documentation/place-gtt-order">Place GTT Order API</a>
  */
 data class PlaceGttOrderParams(
+    @JsonProperty("type")
     val type: GttType,
+
+    @JsonProperty("quantity")
     val quantity: Int,
+
+    @JsonProperty("product")
     val product: Product,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
-    @SerializedName("transaction_type")
+
+    @JsonProperty("transaction_type")
     val transactionType: TransactionType,
+
+    @JsonProperty("rules")
     val rules: List<GttRule>
 )
 
@@ -69,18 +78,22 @@ data class PlaceGttOrderParams(
  *
  * Defines the trigger conditions for a GTT order.
  *
- * @property strategy Rule strategy: ENTRY, TARGET, or STOPLOSS
+ * @property strategy Rule strategy: ENTRY, TARGET, or STOP_LOSS
  * @property triggerType Trigger type: ABOVE, BELOW, or IMMEDIATE
  * @property triggerPrice Price at which the order should be triggered
- * @property trailingGap Gap for trailing stop-loss (STOPLOSS only, min 10% of LTP-to-trigger diff)
+ * @property trailingGap Gap for trailing stop-loss (STOP_LOSS only, min 10% of LTP-to-trigger diff)
  */
 data class GttRule(
+    @JsonProperty("strategy")
     val strategy: GttStrategy,
-    @SerializedName("trigger_type")
+
+    @JsonProperty("trigger_type")
     val triggerType: GttTriggerType,
-    @SerializedName("trigger_price")
+
+    @JsonProperty("trigger_price")
     val triggerPrice: Double,
-    @SerializedName("trailing_gap")
+
+    @JsonProperty("trailing_gap")
     val trailingGap: Double? = null
 )
 
@@ -109,10 +122,16 @@ data class GttRule(
  * @see <a href="https://upstox.com/developer/api-documentation/modify-gtt-order">Modify GTT Order API</a>
  */
 data class ModifyGttOrderParams(
-    @SerializedName("gtt_order_id")
+    @JsonProperty("gtt_order_id")
     val gttOrderId: String,
+
+    @JsonProperty("type")
     val type: GttType,
+
+    @JsonProperty("quantity")
     val quantity: Int,
+
+    @JsonProperty("rules")
     val rules: List<GttRule>
 )
 
@@ -131,6 +150,6 @@ data class ModifyGttOrderParams(
  * @see <a href="https://upstox.com/developer/api-documentation/cancel-gtt-order">Cancel GTT Order API</a>
  */
 data class CancelGttOrderParams(
-    @SerializedName("gtt_order_id")
+    @JsonProperty("gtt_order_id")
     val gttOrderId: String
 )

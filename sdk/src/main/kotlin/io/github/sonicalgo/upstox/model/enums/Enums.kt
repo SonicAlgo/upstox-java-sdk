@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.enums
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * Exchange identifiers supported by Upstox.
@@ -9,14 +9,33 @@ import com.google.gson.annotations.SerializedName
  * ```kotlin
  * val exchange = Exchange.NSE
  * ```
+ *
+ * @see <a href="https://upstox.com/developer/api-documentation/appendix/exchange">Exchange Appendix</a>
  */
 enum class Exchange {
-    /** National Stock Exchange */
+    /** National Stock Exchange - Equities */
     NSE,
-    /** Bombay Stock Exchange */
+
+    /** NSE Futures & Options segment */
+    NFO,
+
+    /** NSE Currency Derivatives segment */
+    CDS,
+
+    /** Bombay Stock Exchange - Equities */
     BSE,
+
+    /** BSE Futures & Options segment */
+    BFO,
+
+    /** BSE Currency Derivatives segment */
+    BCD,
+
     /** Multi Commodity Exchange */
-    MCX
+    MCX,
+
+    /** NSE Commodity Derivatives segment */
+    NSCOM
 }
 
 /**
@@ -32,22 +51,31 @@ enum class Exchange {
 enum class Segment {
     /** NSE Equity segment */
     NSE_EQ,
+
     /** NSE Index segment */
     NSE_INDEX,
+
     /** NSE Futures & Options segment */
     NSE_FO,
+
     /** NSE Currency Derivatives segment */
     NCD_FO,
+
     /** NSE Commodity segment */
     NSE_COM,
+
     /** BSE Equity segment */
     BSE_EQ,
+
     /** BSE Index segment */
     BSE_INDEX,
+
     /** BSE Futures & Options segment */
     BSE_FO,
+
     /** BSE Currency Derivatives segment */
     BCD_FO,
+
     /** MCX Futures & Options segment */
     MCX_FO
 }
@@ -59,9 +87,12 @@ enum class Segment {
  */
 enum class FundSegment {
     /** Equity segment (Securities) */
-    SEC,
+    @JsonProperty("SEC")
+    SECURITIES,
+
     /** Commodity segment */
-    COM
+    @JsonProperty("COM")
+    COMMODITY
 }
 
 /**
@@ -71,16 +102,22 @@ enum class FundSegment {
  *
  * Example usage:
  * ```kotlin
- * val product = Product.D // For delivery orders
+ * val product = Product.DELIVERY // For delivery orders
  * ```
  */
 enum class Product {
     /** Intraday - Position squared off on the same day */
-    I,
+    @JsonProperty("I")
+    INTRADAY,
+
     /** Delivery - Position held for multiple days */
-    D,
+    @JsonProperty("D")
+    DELIVERY,
+
     /** Cover Order - Order with stop loss */
-    CO,
+    @JsonProperty("CO")
+    COVER_ORDER,
+
     /** Margin Trading Facility - Leveraged delivery */
     MTF
 }
@@ -96,12 +133,15 @@ enum class Product {
 enum class OrderType {
     /** Market order - executes at best available price */
     MARKET,
+
     /** Limit order - executes at specified price or better */
     LIMIT,
+
     /** Stop Loss Limit order */
     SL,
+
     /** Stop Loss Market order */
-    @SerializedName("SL-M")
+    @JsonProperty("SL-M")
     SL_M
 }
 
@@ -111,6 +151,7 @@ enum class OrderType {
 enum class TransactionType {
     /** Buy transaction */
     BUY,
+
     /** Sell transaction */
     SELL
 }
@@ -123,6 +164,7 @@ enum class TransactionType {
 enum class Validity {
     /** Day order - valid for the trading day */
     DAY,
+
     /** Immediate or Cancel - must execute immediately or cancel */
     IOC
 }
@@ -131,52 +173,76 @@ enum class Validity {
  * Order status values.
  *
  * Represents the current state of an order.
+ *
+ * @see <a href="https://upstox.com/developer/api-documentation/appendix/order-status">Order Status Appendix</a>
  */
 enum class OrderStatus {
     /** Order has been validated */
-    @SerializedName("validation pending")
+    @JsonProperty("validation pending")
     VALIDATION_PENDING,
+
     /** Order is open/pending */
-    @SerializedName("open pending")
+    @JsonProperty("open pending")
     OPEN_PENDING,
+
     /** Order is open */
-    @SerializedName("open")
+    @JsonProperty("open")
     OPEN,
+
     /** Order is being modified */
-    @SerializedName("modify pending")
+    @JsonProperty("modify pending")
     MODIFY_PENDING,
+
     /** Order modification validated */
-    @SerializedName("modify validation pending")
+    @JsonProperty("modify validation pending")
     MODIFY_VALIDATION_PENDING,
+
     /** Order is being cancelled */
-    @SerializedName("cancel pending")
+    @JsonProperty("cancel pending")
     CANCEL_PENDING,
+
     /** Order has been triggered */
-    @SerializedName("trigger pending")
+    @JsonProperty("trigger pending")
     TRIGGER_PENDING,
+
     /** Order completed successfully */
-    @SerializedName("complete")
+    @JsonProperty("complete")
     COMPLETE,
+
     /** Order was rejected */
-    @SerializedName("rejected")
+    @JsonProperty("rejected")
     REJECTED,
+
     /** Order was cancelled */
-    @SerializedName("cancelled")
+    @JsonProperty("cancelled")
     CANCELLED,
+
     /** After Market Order - received */
-    @SerializedName("after market order req received")
+    @JsonProperty("after market order req received")
     AMO_REQ_RECEIVED,
+
+    /** After Market Order modification request received */
+    @JsonProperty("modify after market order req received")
+    MODIFY_AMO_REQ_RECEIVED,
+
+    /** After Market Order was cancelled */
+    @JsonProperty("cancelled after market order")
+    CANCELLED_AMO,
+
     /** Not cancelled */
-    @SerializedName("not cancelled")
+    @JsonProperty("not cancelled")
     NOT_CANCELLED,
+
     /** Not modified */
-    @SerializedName("not modified")
+    @JsonProperty("not modified")
     NOT_MODIFIED,
+
     /** Modified */
-    @SerializedName("modified")
+    @JsonProperty("modified")
     MODIFIED,
+
     /** Put Order Request Received */
-    @SerializedName("put order req received")
+    @JsonProperty("put order req received")
     PUT_ORDER_REQ_RECEIVED
 }
 
@@ -186,12 +252,18 @@ enum class OrderStatus {
 enum class OrderVariety {
     /** Simple order */
     SIMPLE,
+
     /** After market order */
-    AMO,
+    @JsonProperty("AMO")
+    AFTER_MARKET_ORDER,
+
     /** Cover order */
-    CO,
+    @JsonProperty("CO")
+    COVER_ORDER,
+
     /** One Cancels Other order */
-    OCO
+    @JsonProperty("OCO")
+    ONE_CANCELS_OTHER
 }
 
 /**
@@ -200,6 +272,7 @@ enum class OrderVariety {
 enum class GttType {
     /** Single rule GTT order */
     SINGLE,
+
     /** Multiple rules GTT order */
     MULTIPLE
 }
@@ -210,10 +283,13 @@ enum class GttType {
 enum class GttStrategy {
     /** Entry strategy - triggers when price is reached */
     ENTRY,
+
     /** Target strategy - for profit booking */
     TARGET,
+
     /** Stop loss strategy - for loss prevention */
-    STOPLOSS
+    @JsonProperty("STOPLOSS")
+    STOP_LOSS
 }
 
 /**
@@ -222,26 +298,46 @@ enum class GttStrategy {
 enum class GttTriggerType {
     /** Trigger when price goes above the trigger price */
     ABOVE,
+
     /** Trigger when price goes below the trigger price */
     BELOW,
+
     /** Trigger immediately */
     IMMEDIATE
 }
 
 /**
  * GTT rule status values.
+ *
+ * @see <a href="https://upstox.com/developer/api-documentation/get-gtt-order-details">GTT Order Details API</a>
  */
 enum class GttRuleStatus {
     /** Rule is scheduled and waiting for trigger */
     SCHEDULED,
+
     /** Rule has been triggered */
     TRIGGERED,
+
     /** Rule execution failed */
     FAILED,
+
     /** Rule was cancelled */
     CANCELLED,
+
     /** Rule has expired */
-    EXPIRED
+    EXPIRED,
+
+    /** Rule is open */
+    OPEN,
+
+    /** Rule has been completed */
+    COMPLETED,
+
+    /** Rule is pending */
+    PENDING,
+
+    /** Rule is inactive */
+    INACTIVE
 }
 
 /**
@@ -249,19 +345,23 @@ enum class GttRuleStatus {
  */
 enum class CandleUnit {
     /** Minutes timeframe */
-    @SerializedName("minutes")
+    @JsonProperty("minutes")
     MINUTES,
+
     /** Hours timeframe */
-    @SerializedName("hours")
+    @JsonProperty("hours")
     HOURS,
+
     /** Days timeframe */
-    @SerializedName("days")
+    @JsonProperty("days")
     DAYS,
+
     /** Weeks timeframe */
-    @SerializedName("weeks")
+    @JsonProperty("weeks")
     WEEKS,
+
     /** Months timeframe */
-    @SerializedName("months")
+    @JsonProperty("months")
     MONTHS;
 
     override fun toString(): String = name.lowercase()
@@ -272,13 +372,15 @@ enum class CandleUnit {
  */
 enum class OhlcInterval {
     /** 1 day interval */
-    @SerializedName("1d")
+    @JsonProperty("1d")
     ONE_DAY,
+
     /** 1 minute interval */
-    @SerializedName("I1")
+    @JsonProperty("I1")
     ONE_MINUTE,
+
     /** 30 minute interval */
-    @SerializedName("I30")
+    @JsonProperty("I30")
     THIRTY_MINUTE;
 
     override fun toString(): String = when (this) {
@@ -293,9 +395,12 @@ enum class OhlcInterval {
  */
 enum class OptionType {
     /** Call Option */
-    CE,
+    @JsonProperty("CE")
+    CALL_OPTION,
+
     /** Put Option */
-    PE
+    @JsonProperty("PE")
+    PUT_OPTION
 }
 
 /**
@@ -303,27 +408,39 @@ enum class OptionType {
  */
 enum class UnderlyingType {
     /** Commodity */
-    COM,
+    @JsonProperty("COM")
+    COMMODITY,
+
     /** Index */
     INDEX,
+
     /** Equity */
     EQUITY,
+
     /** Currency */
-    CUR,
+    @JsonProperty("CUR")
+    CURRENCY,
+
     /** Interest Rate Derivative */
-    IRD
+    @JsonProperty("IRD")
+    INTEREST_RATE_DERIVATIVE
 }
 
 /**
- * Instrument type for futures.
+ * Instrument type for futures and options.
  */
 enum class InstrumentType {
     /** Futures contract */
-    FUT,
+    @JsonProperty("FUT")
+    FUTURES,
+
     /** Call Option */
-    CE,
+    @JsonProperty("CE")
+    CALL_OPTION,
+
     /** Put Option */
-    PE
+    @JsonProperty("PE")
+    PUT_OPTION
 }
 
 /**
@@ -332,8 +449,10 @@ enum class InstrumentType {
 enum class HolidayType {
     /** Settlement holiday - no settlement */
     SETTLEMENT_HOLIDAY,
+
     /** Trading holiday - markets closed */
     TRADING_HOLIDAY,
+
     /** Special timing - modified hours */
     SPECIAL_TIMING
 }
@@ -344,14 +463,19 @@ enum class HolidayType {
 enum class MarketStatus {
     /** Normal trading session open */
     NORMAL_OPEN,
+
     /** Normal trading session closed */
     NORMAL_CLOSE,
+
     /** Pre-open session */
     PRE_OPEN_START,
+
     /** Pre-open session ended */
     PRE_OPEN_END,
+
     /** Closing session started */
     CLOSING_START,
+
     /** Closing session ended */
     CLOSING_END
 }
@@ -361,15 +485,24 @@ enum class MarketStatus {
  */
 enum class TradeSegment {
     /** Equity segment */
-    EQ,
+    @JsonProperty("EQ")
+    EQUITY,
+
     /** Futures & Options segment */
-    FO,
+    @JsonProperty("FO")
+    FUTURES_OPTIONS,
+
     /** Commodity segment */
-    COM,
+    @JsonProperty("COM")
+    COMMODITY,
+
     /** Currency Derivatives segment */
-    CD,
+    @JsonProperty("CD")
+    CURRENCY_DERIVATIVES,
+
     /** Mutual Funds segment */
-    MF
+    @JsonProperty("MF")
+    MUTUAL_FUNDS
 }
 
 /**
@@ -377,11 +510,16 @@ enum class TradeSegment {
  */
 enum class TradeType {
     /** Futures trade */
-    FUT,
+    @JsonProperty("FUT")
+    FUTURES,
+
     /** Options trade */
-    OPT,
+    @JsonProperty("OPT")
+    OPTIONS,
+
     /** Equity trade */
-    EQ
+    @JsonProperty("EQ")
+    EQUITY
 }
 
 /**
@@ -389,8 +527,22 @@ enum class TradeType {
  */
 enum class GrantType {
     /** Authorization code grant */
-    @SerializedName("authorization_code")
+    @JsonProperty("authorization_code")
     AUTHORIZATION_CODE;
 
     override fun toString(): String = "authorization_code"
+}
+
+
+/**
+ * Types of updates available in Portfolio Stream.
+ */
+enum class PortfolioUpdateType(val value: String) {
+    ORDER("order"),
+
+    GTT_ORDER("gtt_order"),
+
+    POSITION("position"),
+
+    HOLDING("holding")
 }

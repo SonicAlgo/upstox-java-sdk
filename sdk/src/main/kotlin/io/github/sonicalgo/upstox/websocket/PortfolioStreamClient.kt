@@ -1,11 +1,14 @@
 package io.github.sonicalgo.upstox.websocket
 
-import io.github.sonicalgo.upstox.api.PortfolioUpdateType
+import io.github.sonicalgo.core.client.HttpClient
 import io.github.sonicalgo.upstox.api.WebSocketApi
-import io.github.sonicalgo.upstox.config.ApiClient
-import io.github.sonicalgo.upstox.config.OkHttpClientFactory
 import io.github.sonicalgo.upstox.config.UpstoxConfig
+import io.github.sonicalgo.upstox.config.UpstoxWebSocketConfig
+import io.github.sonicalgo.upstox.model.enums.PortfolioUpdateType
 import io.github.sonicalgo.upstox.model.websocket.*
+import okhttp3.OkHttpClient
+import okio.ByteString
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Client for real-time portfolio updates via WebSocket.
@@ -16,14 +19,21 @@ import io.github.sonicalgo.upstox.model.websocket.*
  * ## Features
  * - Automatic reconnection with exponential backoff on disconnection
  * - Update type tracking - update types are automatically restored after reconnect
+ * - Multiple listener support - add/remove listeners at any time
  * - Ping/pong keepalive (configured at OkHttpClient level)
  * - Thread-safe state management
  *
  * ## Example usage
  * ```kotlin
- * val client = Upstox.createPortfolioStreamClient()
- * client.connect(object : PortfolioStreamListener {
- *     override fun onConnected() {
+ * val upstox = Upstox.builder()
+ *     .accessToken("your-token")
+ *     .build()
+ *
+ * val client = upstox.createPortfolioStreamClient()
+ *
+ * // Add listener
+ * client.addListener(object : PortfolioStreamListener {
+ *     override fun onConnected(isReconnect: Boolean) {
  *         println("Connected to portfolio stream")
  *     }
  *     override fun onOrderUpdate(order: OrderUpdate) {
@@ -44,91 +54,151 @@ import io.github.sonicalgo.upstox.model.websocket.*
  *     override fun onReconnecting(attempt: Int, delayMs: Long) {
  *         println("Reconnecting attempt $attempt in ${delayMs}ms")
  *     }
- *     override fun onReconnected() {
- *         println("Reconnected successfully!")
- *     }
  *     override fun onError(error: Throwable) {
  *         error.printStackTrace()
  *     }
  * })
  *
+ * // Connect
+ * client.connect()
+ *
  * // Later, to stop reconnection attempts and disconnect:
  * client.close()
  * ```
+ *
+ * @see PortfolioStreamListener
+ * @see <a href="https://upstox.com/developer/api-documentation/get-portfolio-stream-feed">Portfolio Stream API</a>
  */
-class PortfolioStreamClient internal constructor() : BaseWebSocketClient(
-    OkHttpClientFactory.wsHttpClient,
-    "PortfolioStream"
-) {
+class PortfolioStreamClient internal constructor(
+    upstoxConfig: UpstoxConfig,
+    wsConfig: UpstoxWebSocketConfig,
+    private val webSocketApi: WebSocketApi,
+    wsHttpClient: OkHttpClient
+) : BaseWebSocketClient(wsHttpClient, upstoxConfig, wsConfig, "PortfolioStream") {
 
-    @Volatile
-    private var listener: PortfolioStreamListener? = null
+    private val listeners = CopyOnWriteArrayList<PortfolioStreamListener>()
 
     // Update types to restore after reconnection
     @Volatile
     private var updateTypes: Set<PortfolioUpdateType> = PortfolioUpdateType.entries.toSet()
 
     /**
+     * Adds a listener to receive portfolio stream events.
+     *
+     * @param listener Listener to add
+     */
+    fun addListener(listener: PortfolioStreamListener) {
+        listeners.add(listener)
+    }
+
+    /**
+     * Removes a listener.
+     *
+     * @param listener Listener to remove
+     */
+    fun removeListener(listener: PortfolioStreamListener) {
+        listeners.remove(listener)
+    }
+
+    /**
      * Connect to the portfolio stream WebSocket.
      *
      * Automatically obtains the authorized WebSocket URL before connecting.
-     * If auto-reconnect is enabled (default from global config), the client will automatically
+     * If auto-reconnect is enabled, the client will automatically
      * attempt to reconnect on disconnection with exponential backoff.
      *
-     * @param listener Listener for portfolio events
      * @param updateTypes Types of updates to subscribe to. Defaults to all types.
-     * @param autoReconnect Whether to automatically reconnect on disconnection (default: uses global config)
+     * @param autoReconnect Whether to automatically reconnect on disconnection (default: from config)
      */
     @JvmOverloads
     fun connect(
-        listener: PortfolioStreamListener,
         updateTypes: Set<PortfolioUpdateType> = PortfolioUpdateType.entries.toSet(),
-        autoReconnect: Boolean = UpstoxConfig.webSocketAutoReconnectEnabled
+        autoReconnect: Boolean = wsConfig.autoReconnectEnabled
     ) {
-        this.listener = listener
         this.updateTypes = updateTypes
         initiateConnection(autoReconnect)
     }
 
     override fun getWebSocketUrl(): String {
-        val authResponse = WebSocketApi.instance.authorizePortfolioStream(updateTypes)
-        return authResponse.authorizedRedirectUri
+        return webSocketApi.authorizePortfolioStream().authorizedRedirectUri
     }
 
     override fun onWebSocketMessage(text: String) {
         parseAndDispatch(text)
     }
 
-    override fun onConnectionEstablished(isReconnect: Boolean) {
-        if (isReconnect) {
-            listener?.onReconnected()
-        } else {
-            listener?.onConnected()
+    override fun onWebSocketBinaryMessage(bytes: ByteString) {
+        // Portfolio stream uses text messages only
+    }
+
+    /**
+     * Notifies all listeners with exception guarding.
+     * If a listener throws, other listeners still receive the notification.
+     */
+    private inline fun notifyListeners(action: (PortfolioStreamListener) -> Unit) {
+        listeners.forEach { listener ->
+            try {
+                action(listener)
+            } catch (e: Exception) {
+                try {
+                    listener.onError(e)
+                } catch (_: Exception) {
+                    // Ignore errors from error handler
+                }
+            }
         }
+    }
+
+    override fun onConnectionEstablished(isReconnect: Boolean) {
+        // Validate credentials before proceeding
+        if (hasCredentialsError()) {
+            notifyListeners { it.onError(IllegalStateException("Access token not set")) }
+            return
+        }
+
+        // Notify listeners
+        notifyListeners { it.onConnected(isReconnect) }
     }
 
     override fun onWebSocketDisconnected(code: Int, reason: String) {
-        listener?.onDisconnected(code, reason)
+        notifyListeners { it.onDisconnected(code, reason) }
     }
 
     override fun onWebSocketReconnecting(attempt: Int, delayMs: Long) {
-        listener?.onReconnecting(attempt, delayMs)
+        notifyListeners { it.onReconnecting(attempt, delayMs) }
     }
 
     override fun onWebSocketError(error: Throwable) {
-        listener?.onError(error)
+        notifyListeners { it.onError(error) }
     }
 
     private fun parseAndDispatch(json: String) {
-        val message = ApiClient.gson.fromJson(json, PortfolioStreamMessage::class.java)
-        val data = message.data ?: return
+        try {
+            val message = HttpClient.objectMapper.readValue(json, PortfolioStreamMessage::class.java)
+            val data = message.data ?: return
 
-        when {
-            data.order != null -> listener?.onOrderUpdate(data.order)
-            data.position != null -> listener?.onPositionUpdate(data.position)
-            data.holding != null -> listener?.onHoldingUpdate(data.holding)
-            data.gttOrder != null -> listener?.onGttOrderUpdate(data.gttOrder)
+            when {
+                data.order != null -> notifyListeners { it.onOrderUpdate(data.order) }
+                data.position != null -> notifyListeners { it.onPositionUpdate(data.position) }
+                data.holding != null -> notifyListeners { it.onHoldingUpdate(data.holding) }
+                data.gttOrder != null -> notifyListeners { it.onGttOrderUpdate(data.gttOrder) }
+            }
+        } catch (e: Exception) {
+            notifyListeners { it.onError(e) }
         }
+    }
+
+    /**
+     * Closes the client and releases resources.
+     *
+     * Closes the WebSocket and clears all listeners.
+     */
+    override fun close() {
+        // Close the WebSocket
+        super.close()
+
+        // Clear listeners last
+        listeners.clear()
     }
 }
 
@@ -140,8 +210,8 @@ class PortfolioStreamClient internal constructor() : BaseWebSocketClient(
  *
  * ## Kotlin Example
  * ```kotlin
- * client.connect(object : PortfolioStreamListener {
- *     override fun onConnected() { println("Connected") }
+ * client.addListener(object : PortfolioStreamListener {
+ *     override fun onConnected(isReconnect: Boolean) { println("Connected") }
  *     override fun onDisconnected(code: Int, reason: String) { }
  *     override fun onError(error: Throwable) { error.printStackTrace() }
  *
@@ -150,12 +220,13 @@ class PortfolioStreamClient internal constructor() : BaseWebSocketClient(
  *         println("Order: ${order.orderId} - ${order.status}")
  *     }
  * })
+ * client.connect()
  * ```
  *
  * ## Java Example
  * ```java
- * client.connect(new PortfolioStreamListener() {
- *     @Override public void onConnected() { }
+ * client.addListener(new PortfolioStreamListener() {
+ *     @Override public void onConnected(boolean isReconnect) { }
  *     @Override public void onDisconnected(int code, String reason) { }
  *     @Override public void onError(Throwable error) { error.printStackTrace(); }
  *
@@ -164,15 +235,18 @@ class PortfolioStreamClient internal constructor() : BaseWebSocketClient(
  *         System.out.println("Order: " + order.getOrderId());
  *     }
  * });
+ * client.connect();
  * ```
  */
 interface PortfolioStreamListener {
-    // ==================== Connection Lifecycle (Required) ====================
+    // ==================== Connection Lifecycle ====================
 
     /**
-     * Called when WebSocket connection is established for the first time.
+     * Called when WebSocket connection is established.
+     *
+     * @param isReconnect true if this is a reconnection, false if first connection
      */
-    fun onConnected()
+    fun onConnected(isReconnect: Boolean)
 
     /**
      * Called when WebSocket is disconnected.
@@ -191,8 +265,6 @@ interface PortfolioStreamListener {
      */
     fun onError(error: Throwable)
 
-    // ==================== Connection Lifecycle (Optional) ====================
-
     /**
      * Called when the client is attempting to reconnect.
      *
@@ -200,11 +272,6 @@ interface PortfolioStreamListener {
      * @param delayMs Delay in milliseconds before the reconnection attempt
      */
     fun onReconnecting(attempt: Int, delayMs: Long) {}
-
-    /**
-     * Called when successfully reconnected after a disconnection.
-     */
-    fun onReconnected() {}
 
     // ==================== Portfolio Update Callbacks (All Optional) ====================
 

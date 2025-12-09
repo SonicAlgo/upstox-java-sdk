@@ -3,10 +3,12 @@ package io.github.sonicalgo.upstox.api
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.UpstoxConstants
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
+import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.request.HistoricalCandleParams
 import io.github.sonicalgo.upstox.model.request.IntradayCandleParams
 import io.github.sonicalgo.upstox.model.response.CandleData
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 /**
  * API module for historical candle data.
@@ -16,10 +18,10 @@ import java.net.URLEncoder
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val histApi = upstox.getHistoricalDataApi()
  *
  * // Get daily historical data
- * val candles = upstox.getHistoricalDataApi().getHistoricalCandle(HistoricalCandleParams(
+ * val candles = histApi.getHistoricalCandle(HistoricalCandleParams(
  *     instrumentKey = "NSE_EQ|INE848E01016",
  *     unit = CandleUnit.DAYS,
  *     interval = 1,
@@ -28,7 +30,7 @@ import java.net.URLEncoder
  * ))
  *
  * // Get intraday data
- * val intradayCandles = upstox.getHistoricalDataApi().getIntradayCandle(IntradayCandleParams(
+ * val intradayCandles = histApi.getIntradayCandle(IntradayCandleParams(
  *     instrumentKey = "NSE_EQ|INE848E01016",
  *     unit = CandleUnit.MINUTES,
  *     interval = 5
@@ -37,7 +39,7 @@ import java.net.URLEncoder
  *
  * @see <a href="https://upstox.com/developer/api-documentation/v3/get-historical-candle-data">Historical Candle API</a>
  */
-class HistoricalDataApi private constructor() {
+class HistoricalDataApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Gets historical candle data.
@@ -73,13 +75,17 @@ class HistoricalDataApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/v3/get-historical-candle-data">Historical Candle API</a>
      */
     fun getHistoricalCandle(params: HistoricalCandleParams): CandleData {
-        val encodedKey = URLEncoder.encode(params.instrumentKey, "UTF-8")
+        val encodedKey = URLEncoder.encode(params.instrumentKey, StandardCharsets.UTF_8)
         val endpoint = buildString {
             append("${Endpoints.HISTORICAL_CANDLE_BASE}/$encodedKey/${params.unit}/${params.interval}/${params.toDate}")
             params.fromDate?.let { append("/$it") }
         }
 
-        return ApiClient.get(endpoint = endpoint, baseUrl = UpstoxConstants.BASE_URL_V3)
+        val response: UpstoxResponse<CandleData> = apiClient.get(
+            endpoint = endpoint,
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V3
+        )
+        return response.dataOrThrow()
     }
 
     /**
@@ -108,17 +114,18 @@ class HistoricalDataApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/v3/get-intra-day-candle-data">Intraday Candle API</a>
      */
     fun getIntradayCandle(params: IntradayCandleParams): CandleData {
-        val encodedKey = URLEncoder.encode(params.instrumentKey, "UTF-8")
+        val encodedKey = URLEncoder.encode(params.instrumentKey, StandardCharsets.UTF_8)
         val endpoint = "${Endpoints.INTRADAY_CANDLE_BASE}/$encodedKey/${params.unit}/${params.interval}"
-        return ApiClient.get(endpoint = endpoint, baseUrl = UpstoxConstants.BASE_URL_V3)
+
+        val response: UpstoxResponse<CandleData> = apiClient.get(
+            endpoint = endpoint,
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V3
+        )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
         const val HISTORICAL_CANDLE_BASE = "/historical-candle"
         const val INTRADAY_CANDLE_BASE = "/historical-candle/intraday"
-    }
-
-    companion object {
-        internal val instance by lazy { HistoricalDataApi() }
     }
 }

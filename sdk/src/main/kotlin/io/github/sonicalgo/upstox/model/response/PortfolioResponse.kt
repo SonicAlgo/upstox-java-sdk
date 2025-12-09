@@ -1,6 +1,8 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.sonicalgo.upstox.model.enums.Exchange
+import io.github.sonicalgo.upstox.model.enums.Product
 
 /**
  * Position details.
@@ -11,7 +13,7 @@ import com.google.gson.annotations.SerializedName
  * @property multiplier Quantity/lot size multiplier for P&L calculations
  * @property value Net position value
  * @property pnl Profit/loss on the position
- * @property product Product type: I, D, CO
+ * @property product Product type: INTRADAY, DELIVERY, COVER_ORDER
  * @property instrumentToken Instrument key identifier
  * @property averagePrice Mean acquisition price for net quantity
  * @property buyValue Net bought quantities value
@@ -38,53 +40,88 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/get-positions">Get Positions API</a>
  */
 data class Position(
-    val exchange: String,
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("multiplier")
     val multiplier: Double,
+
+    @JsonProperty("value")
     val value: Double,
+
+    @JsonProperty("pnl")
     val pnl: Double,
-    val product: String,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("product")
+    val product: Product,
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
-    @SerializedName("average_price")
+
+    @JsonProperty("average_price")
     val averagePrice: Double,
-    @SerializedName("buy_value")
+
+    @JsonProperty("buy_value")
     val buyValue: Double,
-    @SerializedName("overnight_quantity")
+
+    @JsonProperty("overnight_quantity")
     val overnightQuantity: Int,
-    @SerializedName("day_buy_value")
+
+    @JsonProperty("day_buy_value")
     val dayBuyValue: Double,
-    @SerializedName("day_buy_price")
+
+    @JsonProperty("day_buy_price")
     val dayBuyPrice: Double,
-    @SerializedName("overnight_buy_amount")
+
+    @JsonProperty("overnight_buy_amount")
     val overnightBuyAmount: Double,
-    @SerializedName("overnight_buy_quantity")
+
+    @JsonProperty("overnight_buy_quantity")
     val overnightBuyQuantity: Int,
-    @SerializedName("day_buy_quantity")
+
+    @JsonProperty("day_buy_quantity")
     val dayBuyQuantity: Int,
-    @SerializedName("day_sell_value")
+
+    @JsonProperty("day_sell_value")
     val daySellValue: Double,
-    @SerializedName("day_sell_price")
+
+    @JsonProperty("day_sell_price")
     val daySellPrice: Double,
-    @SerializedName("overnight_sell_amount")
+
+    @JsonProperty("overnight_sell_amount")
     val overnightSellAmount: Double,
-    @SerializedName("overnight_sell_quantity")
+
+    @JsonProperty("overnight_sell_quantity")
     val overnightSellQuantity: Int,
-    @SerializedName("day_sell_quantity")
+
+    @JsonProperty("day_sell_quantity")
     val daySellQuantity: Int,
+
+    @JsonProperty("quantity")
     val quantity: Int,
-    @SerializedName("last_price")
+
+    @JsonProperty("last_price")
     val lastPrice: Double,
+
+    @JsonProperty("unrealised")
     val unrealised: Double,
+
+    @JsonProperty("realised")
     val realised: Double,
-    @SerializedName("sell_value")
+
+    @JsonProperty("sell_value")
     val sellValue: Double,
-    @SerializedName("trading_symbol")
+
+    @JsonProperty("trading_symbol")
     val tradingSymbol: String,
-    @SerializedName("close_price")
+
+    @JsonProperty("close_price")
     val closePrice: Double,
-    @SerializedName("buy_price")
+
+    @JsonProperty("buy_price")
     val buyPrice: Double,
-    @SerializedName("sell_price")
+
+    @JsonProperty("sell_price")
     val sellPrice: Double
 )
 
@@ -98,7 +135,7 @@ data class Position(
  * @property collateralType RMS-assigned collateral category
  * @property companyName Company name
  * @property haircut RMS haircut percentage for collateral cases
- * @property product Product type: I, D, CO, MTF
+ * @property product Product type: INTRADAY, DELIVERY, COVER_ORDER, MTF
  * @property quantity Total holding quantity
  * @property tradingSymbol Trading symbol
  * @property lastPrice Last traded price
@@ -115,38 +152,62 @@ data class Position(
  * @see <a href="https://upstox.com/developer/api-documentation/get-holdings">Get Holdings API</a>
  */
 data class Holding(
+    @JsonProperty("isin")
     val isin: String,
-    @SerializedName("cnc_used_quantity")
+
+    @JsonProperty("cnc_used_quantity")
     val cncUsedQuantity: Int,
-    @SerializedName("collateral_type")
+
+    @JsonProperty("collateral_type")
     val collateralType: String? = null,
-    @SerializedName("company_name")
+
+    @JsonProperty("company_name")
     val companyName: String,
+
+    @JsonProperty("haircut")
     val haircut: Double,
-    val product: String,
+
+    @JsonProperty("product")
+    val product: Product,
+
+    @JsonProperty("quantity")
     val quantity: Int,
-    @SerializedName("trading_symbol")
+
+    @JsonProperty("trading_symbol")
     val tradingSymbol: String,
-    @SerializedName("last_price")
+
+    @JsonProperty("last_price")
     val lastPrice: Double,
-    @SerializedName("close_price")
+
+    @JsonProperty("close_price")
     val closePrice: Double,
+
+    @JsonProperty("pnl")
     val pnl: Double,
-    @SerializedName("day_change")
+
+    @JsonProperty("day_change")
     val dayChange: Double,
-    @SerializedName("day_change_percentage")
+
+    @JsonProperty("day_change_percentage")
     val dayChangePercentage: Double,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
-    @SerializedName("average_price")
+
+    @JsonProperty("average_price")
     val averagePrice: Double,
-    @SerializedName("collateral_quantity")
+
+    @JsonProperty("collateral_quantity")
     val collateralQuantity: Int,
-    @SerializedName("collateral_update_quantity")
+
+    @JsonProperty("collateral_update_quantity")
     val collateralUpdateQuantity: Int? = null,
-    @SerializedName("t1_quantity")
+
+    @JsonProperty("t1_quantity")
     val t1Quantity: Int,
-    val exchange: String
+
+    @JsonProperty("exchange")
+    val exchange: Exchange
 )
 
 /**
@@ -156,5 +217,6 @@ data class Holding(
  * @see <a href="https://upstox.com/developer/api-documentation/convert-positions">Convert Positions API</a>
  */
 data class ConvertPositionResponse(
+    @JsonProperty("status")
     val status: String
 )

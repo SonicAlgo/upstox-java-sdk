@@ -1,14 +1,18 @@
 package io.github.sonicalgo.upstox.api
 
 import io.github.sonicalgo.upstox.config.ApiClient
-import io.github.sonicalgo.upstox.config.UpstoxConstants
+import io.github.sonicalgo.upstox.config.UpstoxConfig
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_V2
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_V3
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
+import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.request.AccessTokenRequestParams
 import io.github.sonicalgo.upstox.model.request.AuthorizeParams
 import io.github.sonicalgo.upstox.model.request.GetTokenParams
 import io.github.sonicalgo.upstox.model.response.AccessTokenRequestResponse
 import io.github.sonicalgo.upstox.model.response.TokenResponse
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 /**
  * API module for authentication and login operations.
@@ -17,16 +21,16 @@ import java.net.URLEncoder
  *
  * Example - OAuth flow:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val loginApi = upstox.getLoginApi()
  *
  * // Step 1: Get authorization URL and redirect user
- * val authUrl = upstox.getLoginApi().getAuthorizationUrl(AuthorizeParams(
+ * val authUrl = loginApi.getAuthorizationUrl(AuthorizeParams(
  *     clientId = "your-api-key",
  *     redirectUri = "https://yourapp.com/callback"
  * ))
  *
  * // Step 2: After user authorizes, exchange code for token
- * val tokenResponse = upstox.getLoginApi().getToken(GetTokenParams(
+ * val tokenResponse = loginApi.getToken(GetTokenParams(
  *     code = "authorization-code-from-callback",
  *     clientId = "your-api-key",
  *     clientSecret = "your-api-secret",
@@ -40,7 +44,10 @@ import java.net.URLEncoder
  * @see <a href="https://upstox.com/developer/api-documentation/authorize">Authorize API</a>
  * @see <a href="https://upstox.com/developer/api-documentation/get-token">Get Token API</a>
  */
-class LoginApi private constructor() {
+class LoginApi internal constructor(
+    private val apiClient: ApiClient,
+    private val config: UpstoxConfig
+) {
 
     /**
      * Constructs the authorization URL for initiating OAuth flow.
@@ -67,13 +74,13 @@ class LoginApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/authorize">Authorize API</a>
      */
     fun getAuthorizationUrl(params: AuthorizeParams): String {
-        val baseUrl = "${UpstoxConstants.BASE_URL_V2}${Endpoints.AUTHORIZATION_DIALOG}"
+        val baseUrl = "${BASE_URL_V2}${Endpoints.AUTHORIZATION_DIALOG}"
         val queryParams = buildString {
             append("response_type=${params.responseType}")
-            append("&client_id=${URLEncoder.encode(params.clientId, "UTF-8")}")
-            append("&redirect_uri=${URLEncoder.encode(params.redirectUri, "UTF-8")}")
+            append("&client_id=${URLEncoder.encode(params.clientId, StandardCharsets.UTF_8)}")
+            append("&redirect_uri=${URLEncoder.encode(params.redirectUri, StandardCharsets.UTF_8)}")
             if (params.state != null) {
-                append("&state=${URLEncoder.encode(params.state, "UTF-8")}")
+                append("&state=${URLEncoder.encode(params.state, StandardCharsets.UTF_8)}")
             }
         }
         return "$baseUrl?$queryParams"
@@ -108,7 +115,7 @@ class LoginApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-token">Get Token API</a>
      */
     fun getToken(params: GetTokenParams): TokenResponse {
-        return ApiClient.post(
+        return apiClient.post(
             endpoint = Endpoints.GET_TOKEN,
             formParams = mapOf(
                 "code" to params.code,
@@ -117,8 +124,7 @@ class LoginApi private constructor() {
                 "redirect_uri" to params.redirectUri,
                 "grant_type" to params.grantType
             ),
-            baseUrl = UpstoxConstants.BASE_URL_V2,
-            unwrap = false
+            overrideBaseUrl = BASE_URL_V2
         )
     }
 
@@ -147,18 +153,20 @@ class LoginApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/access-token-request">Access Token Request API</a>
      */
     fun requestAccessToken(clientId: String, params: AccessTokenRequestParams): AccessTokenRequestResponse {
-        return ApiClient.post(
+        val response: UpstoxResponse<AccessTokenRequestResponse> = apiClient.post(
             endpoint = "${Endpoints.REQUEST_ACCESS_TOKEN_BASE}/$clientId",
             body = params,
-            baseUrl = UpstoxConstants.BASE_URL_V3
+            overrideBaseUrl = BASE_URL_V3
         )
+        return response.dataOrThrow()
     }
 
     /**
      * Logs out the user and invalidates the current session.
      *
-     * After logout, the access token becomes invalid and cannot be used
-     * for subsequent API calls. A new authentication is required.
+     * After successful logout, the access token is invalidated server-side
+     * and automatically cleared from the SDK. A new authentication is required
+     * for subsequent API calls.
      *
      * Example:
      * ```kotlin
@@ -167,6 +175,7 @@ class LoginApi private constructor() {
      * val success = loginApi.logout()
      * if (success) {
      *     println("Logged out successfully")
+     *     // Access token has been cleared from the SDK
      * }
      * ```
      *
@@ -176,10 +185,15 @@ class LoginApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/logout">Logout API</a>
      */
     fun logout(): Boolean {
-        return ApiClient.delete(
+        val response: UpstoxResponse<Boolean> = apiClient.delete(
             endpoint = Endpoints.LOGOUT,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
+        val success = response.dataOrThrow()
+        if (success) {
+            config.accessToken = ""
+        }
+        return success
     }
 
     internal object Endpoints {
@@ -187,9 +201,5 @@ class LoginApi private constructor() {
         const val GET_TOKEN = "/login/authorization/token"
         const val REQUEST_ACCESS_TOKEN_BASE = "/login/auth/token/request"
         const val LOGOUT = "/logout"
-    }
-
-    companion object {
-        internal val instance by lazy { LoginApi() }
     }
 }

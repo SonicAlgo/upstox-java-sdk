@@ -3,6 +3,7 @@ package io.github.sonicalgo.upstox.api
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_V2
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
+import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.enums.FundSegment
 import io.github.sonicalgo.upstox.model.response.FundsAndMargin
 import io.github.sonicalgo.upstox.model.response.UserProfile
@@ -14,22 +15,22 @@ import io.github.sonicalgo.upstox.model.response.UserProfile
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val userApi = upstox.getUserApi()
  *
  * // Get user profile
- * val profile = upstox.getUserApi().getProfile()
+ * val profile = userApi.getProfile()
  * println("User: ${profile.userName}")
  * println("Email: ${profile.email}")
  *
  * // Get funds and margin
- * val funds = upstox.getUserApi().getFundsAndMargin()
+ * val funds = userApi.getFundsAndMargin()
  * println("Available Margin: ${funds.equity?.availableMargin}")
  * ```
  *
  * @see <a href="https://upstox.com/developer/api-documentation/get-profile">Get Profile API</a>
  * @see <a href="https://upstox.com/developer/api-documentation/get-user-fund-margin">Get Funds and Margin API</a>
  */
-class UserApi private constructor() {
+class UserApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Retrieves the profile of the authenticated user.
@@ -54,10 +55,11 @@ class UserApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-profile">Get Profile API</a>
      */
     fun getProfile(): UserProfile {
-        return ApiClient.get(
+        val response: UpstoxResponse<UserProfile> = apiClient.get(
             endpoint = Endpoints.GET_PROFILE,
-            baseUrl = BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -80,11 +82,11 @@ class UserApi private constructor() {
      *
      * Example - Get specific segment:
      * ```kotlin
-     * val funds = userApi.getFundsAndMargin(FundSegment.SEC)
+     * val funds = userApi.getFundsAndMargin(FundSegment.SECURITIES)
      * println("Equity Margin: ${funds.equity?.availableMargin}")
      * ```
      *
-     * @param segment Optional segment filter (SEC for Equity, COM for Commodity)
+     * @param segment Optional segment filter (SECURITIES for Equity, COMMODITY for Commodity)
      * @return [FundsAndMargin] Funds and margin details
      * @throws UpstoxApiException if the request fails or service is unavailable
      *
@@ -95,19 +97,16 @@ class UserApi private constructor() {
         val queryParams = mutableMapOf<String, String?>()
         segment?.let { queryParams["segment"] = it.name }
 
-        return ApiClient.get(
+        val response: UpstoxResponse<FundsAndMargin> = apiClient.get(
             endpoint = Endpoints.GET_FUNDS_AND_MARGIN,
             queryParams = queryParams,
-            baseUrl = BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
         const val GET_PROFILE = "/user/profile"
         const val GET_FUNDS_AND_MARGIN = "/user/get-funds-and-margin"
-    }
-
-    companion object {
-        internal val instance by lazy { UserApi() }
     }
 }

@@ -1,6 +1,9 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.sonicalgo.upstox.model.enums.Exchange
+import io.github.sonicalgo.upstox.model.enums.HolidayType
+import io.github.sonicalgo.upstox.model.enums.MarketStatus
 
 /**
  * Market holiday information.
@@ -15,13 +18,19 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/get-market-holidays">Market Holidays API</a>
  */
 data class MarketHoliday(
+    @JsonProperty("date")
     val date: String,
+
+    @JsonProperty("description")
     val description: String,
-    @SerializedName("holiday_type")
-    val holidayType: String,
-    @SerializedName("closed_exchanges")
-    val closedExchanges: List<String>? = null,
-    @SerializedName("open_exchanges")
+
+    @JsonProperty("holiday_type")
+    val holidayType: HolidayType,
+
+    @JsonProperty("closed_exchanges")
+    val closedExchanges: List<Exchange>? = null,
+
+    @JsonProperty("open_exchanges")
     val openExchanges: List<ExchangeTiming>? = null
 )
 
@@ -33,10 +42,13 @@ data class MarketHoliday(
  * @property endTime Market close timestamp in milliseconds
  */
 data class ExchangeTiming(
-    val exchange: String,
-    @SerializedName("start_time")
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("start_time")
     val startTime: Long,
-    @SerializedName("end_time")
+
+    @JsonProperty("end_time")
     val endTime: Long
 )
 
@@ -49,10 +61,13 @@ data class ExchangeTiming(
  * @see <a href="https://upstox.com/developer/api-documentation/get-market-timings">Market Timings API</a>
  */
 data class MarketTiming(
-    val exchange: String,
-    @SerializedName("start_time")
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("start_time")
     val startTime: Long,
-    @SerializedName("end_time")
+
+    @JsonProperty("end_time")
     val endTime: Long
 )
 
@@ -67,8 +82,12 @@ data class MarketTiming(
  * @see <a href="https://upstox.com/developer/api-documentation/get-market-status">Market Status API</a>
  */
 data class MarketStatusResponse(
-    val exchange: String,
-    val status: String,
-    @SerializedName("last_updated")
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("status")
+    val status: MarketStatus,
+
+    @JsonProperty("last_updated")
     val lastUpdated: Long
 )

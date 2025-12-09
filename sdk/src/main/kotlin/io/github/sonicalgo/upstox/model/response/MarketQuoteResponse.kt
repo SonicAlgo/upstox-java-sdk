@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * Full market quote data.
@@ -27,33 +27,55 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/get-full-market-quote">Full Market Quote API</a>
  */
 data class FullMarketQuote(
+    @JsonProperty("ohlc")
     val ohlc: OhlcData,
+
+    @JsonProperty("depth")
     val depth: MarketDepth,
+
+    @JsonProperty("timestamp")
     val timestamp: String? = null,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
+
+    @JsonProperty("symbol")
     val symbol: String? = null,
-    @SerializedName("last_price")
+
+    @JsonProperty("last_price")
     val lastPrice: Double,
+
+    @JsonProperty("volume")
     val volume: Long,
-    @SerializedName("average_price")
+
+    @JsonProperty("average_price")
     val averagePrice: Double? = null,
+
+    @JsonProperty("oi")
     val oi: Long? = null,
-    @SerializedName("net_change")
+
+    @JsonProperty("net_change")
     val netChange: Double? = null,
-    @SerializedName("total_buy_quantity")
+
+    @JsonProperty("total_buy_quantity")
     val totalBuyQuantity: Long? = null,
-    @SerializedName("total_sell_quantity")
+
+    @JsonProperty("total_sell_quantity")
     val totalSellQuantity: Long? = null,
-    @SerializedName("lower_circuit_limit")
+
+    @JsonProperty("lower_circuit_limit")
     val lowerCircuitLimit: Double? = null,
-    @SerializedName("upper_circuit_limit")
+
+    @JsonProperty("upper_circuit_limit")
     val upperCircuitLimit: Double? = null,
-    @SerializedName("last_trade_time")
+
+    @JsonProperty("last_trade_time")
     val lastTradeTime: String? = null,
-    @SerializedName("oi_day_high")
+
+    @JsonProperty("oi_day_high")
     val oiDayHigh: Long? = null,
-    @SerializedName("oi_day_low")
+
+    @JsonProperty("oi_day_low")
     val oiDayLow: Long? = null
 )
 
@@ -66,9 +88,16 @@ data class FullMarketQuote(
  * @property close Closing/last price
  */
 data class OhlcData(
+    @JsonProperty("open")
     val open: Double,
+
+    @JsonProperty("high")
     val high: Double,
+
+    @JsonProperty("low")
     val low: Double,
+
+    @JsonProperty("close")
     val close: Double
 )
 
@@ -79,7 +108,10 @@ data class OhlcData(
  * @property sell Top 5 sell orders
  */
 data class MarketDepth(
+    @JsonProperty("buy")
     val buy: List<DepthLevel>,
+
+    @JsonProperty("sell")
     val sell: List<DepthLevel>
 )
 
@@ -91,8 +123,13 @@ data class MarketDepth(
  * @property orders Number of orders at this level
  */
 data class DepthLevel(
+    @JsonProperty("quantity")
     val quantity: Int,
+
+    @JsonProperty("price")
     val price: Double,
+
+    @JsonProperty("orders")
     val orders: Int
 )
 
@@ -107,14 +144,19 @@ data class DepthLevel(
  * @see <a href="https://upstox.com/developer/api-documentation/get-market-quote-ohlc">OHLC Quote API</a>
  */
 data class OhlcQuote(
-    @SerializedName("last_price")
+    @JsonProperty("last_price")
     val lastPrice: Double,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
+
+    @JsonProperty("ohlc")
     val ohlc: OhlcData? = null,
-    @SerializedName("prev_ohlc")
+
+    @JsonProperty("prev_ohlc")
     val prevOhlc: OhlcV3Data? = null,
-    @SerializedName("live_ohlc")
+
+    @JsonProperty("live_ohlc")
     val liveOhlc: OhlcV3Data? = null
 )
 
@@ -129,11 +171,22 @@ data class OhlcQuote(
  * @property ts Candle start timestamp
  */
 data class OhlcV3Data(
+    @JsonProperty("open")
     val open: Double,
+
+    @JsonProperty("high")
     val high: Double,
+
+    @JsonProperty("low")
     val low: Double,
+
+    @JsonProperty("close")
     val close: Double,
+
+    @JsonProperty("volume")
     val volume: Long? = null,
+
+    @JsonProperty("ts")
     val ts: Long? = null
 )
 
@@ -148,12 +201,19 @@ data class OhlcV3Data(
  * @see <a href="https://upstox.com/developer/api-documentation/ltp">LTP API</a>
  */
 data class LtpQuote(
-    @SerializedName("last_price")
+    @JsonProperty("last_price")
     val lastPrice: Double,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
+
+    @JsonProperty("ltq")
     val ltq: Int? = null,
+
+    @JsonProperty("volume")
     val volume: Long? = null,
+
+    @JsonProperty("cp")
     val cp: Double? = null
 )
 
@@ -176,17 +236,36 @@ data class LtpQuote(
  * @see <a href="https://upstox.com/developer/api-documentation/option-greek">Option Greek API</a>
  */
 data class OptionGreeksQuote(
-    @SerializedName("last_price")
+    @JsonProperty("last_price")
     val lastPrice: Double,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
+
+    @JsonProperty("ltq")
     val ltq: Int? = null,
+
+    @JsonProperty("volume")
     val volume: Long? = null,
+
+    @JsonProperty("cp")
     val cp: Double? = null,
+
+    @JsonProperty("iv")
     val iv: Double? = null,
+
+    @JsonProperty("delta")
     val delta: Double? = null,
+
+    @JsonProperty("gamma")
     val gamma: Double? = null,
+
+    @JsonProperty("theta")
     val theta: Double? = null,
+
+    @JsonProperty("vega")
     val vega: Double? = null,
+
+    @JsonProperty("oi")
     val oi: Long? = null
 )

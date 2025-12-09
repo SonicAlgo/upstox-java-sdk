@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.request
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.sonicalgo.upstox.model.enums.*
 
 /**
@@ -15,7 +15,7 @@ import io.github.sonicalgo.upstox.model.enums.*
  * val params = PlaceOrderParams(
  *     instrumentToken = "NSE_EQ|INE669E01016",
  *     quantity = 1,
- *     product = Product.D,
+ *     product = Product.DELIVERY,
  *     validity = Validity.DAY,
  *     price = 100.0,
  *     orderType = OrderType.LIMIT,
@@ -29,10 +29,10 @@ import io.github.sonicalgo.upstox.model.enums.*
  *
  * @property instrumentToken Key of the instrument (e.g., "NSE_EQ|INE669E01016")
  * @property quantity Quantity to order (lots for commodity segments)
- * @property product Product type: I (Intraday), D (Delivery), or MTF
+ * @property product Product type: INTRADAY, DELIVERY, or MTF
  * @property validity Order validity: DAY or IOC
  * @property price Order price (0 for MARKET orders)
- * @property orderType Order type: MARKET, LIMIT, SL, or SL-M
+ * @property orderType Order type: MARKET, LIMIT, SL, or SL_M
  * @property transactionType Transaction type: BUY or SELL
  * @property disclosedQuantity Quantity visible in market depth (0 for full visibility)
  * @property triggerPrice Trigger price for stop loss orders (0 for non-SL)
@@ -42,23 +42,40 @@ import io.github.sonicalgo.upstox.model.enums.*
  * @see <a href="https://upstox.com/developer/api-documentation/v3/place-order">Place Order V3 API</a>
  */
 data class PlaceOrderParams(
-    @SerializedName("instrument_token")
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
+
+    @JsonProperty("quantity")
     val quantity: Int,
+
+    @JsonProperty("product")
     val product: Product,
+
+    @JsonProperty("validity")
     val validity: Validity,
+
+    @JsonProperty("price")
     val price: Double,
-    @SerializedName("order_type")
+
+    @JsonProperty("order_type")
     val orderType: OrderType,
-    @SerializedName("transaction_type")
+
+    @JsonProperty("transaction_type")
     val transactionType: TransactionType,
-    @SerializedName("disclosed_quantity")
+
+    @JsonProperty("disclosed_quantity")
     val disclosedQuantity: Int,
-    @SerializedName("trigger_price")
+
+    @JsonProperty("trigger_price")
     val triggerPrice: Double,
-    @SerializedName("is_amo")
+
+    @JsonProperty("is_amo")
     val isAmo: Boolean,
+
+    @JsonProperty("tag")
     val tag: String? = null,
+
+    @JsonProperty("slice")
     val slice: Boolean? = null
 )
 
@@ -69,11 +86,11 @@ data class PlaceOrderParams(
  *
  * @property correlationId Unique identifier for this order (max 20 chars)
  * @property quantity Quantity to order
- * @property product Product type: I, D, or MTF
+ * @property product Product type: INTRADAY, DELIVERY, or MTF
  * @property validity Order validity: DAY or IOC
  * @property price Order price (0 for MARKET orders)
  * @property instrumentToken Instrument key identifier
- * @property orderType Order type: MARKET, LIMIT, SL, or SL-M
+ * @property orderType Order type: MARKET, LIMIT, SL, or SL_M
  * @property transactionType Transaction type: BUY or SELL
  * @property tag Custom order tag (max 40 characters)
  * @property disclosedQuantity Disclosed quantity visible in market depth
@@ -83,25 +100,43 @@ data class PlaceOrderParams(
  * @see <a href="https://upstox.com/developer/api-documentation/place-multi-order">Place Multi Order API</a>
  */
 data class MultiOrderParams(
-    @SerializedName("correlation_id")
+    @JsonProperty("correlation_id")
     val correlationId: String,
+
+    @JsonProperty("quantity")
     val quantity: Int,
+
+    @JsonProperty("product")
     val product: Product,
+
+    @JsonProperty("validity")
     val validity: Validity,
+
+    @JsonProperty("price")
     val price: Double,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
-    @SerializedName("order_type")
+
+    @JsonProperty("order_type")
     val orderType: OrderType,
-    @SerializedName("transaction_type")
+
+    @JsonProperty("transaction_type")
     val transactionType: TransactionType,
+
+    @JsonProperty("tag")
     val tag: String? = null,
-    @SerializedName("disclosed_quantity")
+
+    @JsonProperty("disclosed_quantity")
     val disclosedQuantity: Int? = null,
-    @SerializedName("trigger_price")
+
+    @JsonProperty("trigger_price")
     val triggerPrice: Double? = null,
-    @SerializedName("is_amo")
+
+    @JsonProperty("is_amo")
     val isAmo: Boolean? = null,
+
+    @JsonProperty("slice")
     val slice: Boolean? = null
 )
 
@@ -126,7 +161,7 @@ data class MultiOrderParams(
  *
  * @property orderId The order ID to modify
  * @property validity Order validity: DAY or IOC
- * @property orderType Order type: MARKET, LIMIT, SL, or SL-M
+ * @property orderType Order type: MARKET, LIMIT, SL, or SL_M
  * @property price New order price
  * @property triggerPrice New trigger price for stop loss orders
  * @property quantity New order quantity
@@ -134,16 +169,25 @@ data class MultiOrderParams(
  * @see <a href="https://upstox.com/developer/api-documentation/v3/modify-order">Modify Order V3 API</a>
  */
 data class ModifyOrderParams(
-    @SerializedName("order_id")
+    @JsonProperty("order_id")
     val orderId: String,
+
+    @JsonProperty("validity")
     val validity: Validity,
-    @SerializedName("order_type")
+
+    @JsonProperty("order_type")
     val orderType: OrderType,
+
+    @JsonProperty("price")
     val price: Double,
-    @SerializedName("trigger_price")
+
+    @JsonProperty("trigger_price")
     val triggerPrice: Double,
+
+    @JsonProperty("quantity")
     val quantity: Int? = null,
-    @SerializedName("disclosed_quantity")
+
+    @JsonProperty("disclosed_quantity")
     val disclosedQuantity: Int? = null
 )
 
@@ -173,7 +217,10 @@ data class ModifyOrderParams(
  * @see <a href="https://upstox.com/developer/api-documentation/cancel-multi-order">Cancel Multi Order API</a>
  */
 data class CancelMultiOrderParams(
+    @JsonProperty("segment")
     val segment: Segment? = null,
+
+    @JsonProperty("tag")
     val tag: String? = null
 )
 
@@ -198,6 +245,9 @@ data class CancelMultiOrderParams(
  * @see <a href="https://upstox.com/developer/api-documentation/exit-all-positions">Exit All Positions API</a>
  */
 data class ExitAllPositionsParams(
+    @JsonProperty("segment")
     val segment: Segment? = null,
+
+    @JsonProperty("tag")
     val tag: String? = null
 )

@@ -1,6 +1,7 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.sonicalgo.upstox.model.enums.TradeType
 
 /**
  * Trade P&L report metadata.
@@ -12,9 +13,10 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/get-report-meta-data">Get Report Metadata API</a>
  */
 data class TradePnlMetadata(
-    @SerializedName("trades_count")
+    @JsonProperty("trades_count")
     val tradesCount: Int,
-    @SerializedName("page_size_limit")
+
+    @JsonProperty("page_size_limit")
     val pageSizeLimit: Int
 )
 
@@ -26,7 +28,7 @@ data class TradePnlMetadata(
  * @property quantity Trade quantity
  * @property isin Standard ISIN
  * @property scripName Security name
- * @property tradeType Trade type: FUT, OPT, or EQ
+ * @property tradeType Trade type: FUTURES, OPTIONS, or EQUITY
  * @property buyDate Buy date in dd-mm-yyyy format
  * @property buyAverage Average buy price
  * @property sellDate Sell date in dd-mm-yyyy format
@@ -36,23 +38,34 @@ data class TradePnlMetadata(
  * @see <a href="https://upstox.com/developer/api-documentation/get-profit-and-loss-report">Get P&L Report API</a>
  */
 data class TradePnlEntry(
+    @JsonProperty("quantity")
     val quantity: Double,
+
+    @JsonProperty("isin")
     val isin: String? = null,
-    @SerializedName("scrip_name")
+
+    @JsonProperty("scrip_name")
     val scripName: String,
-    @SerializedName("trade_type")
-    val tradeType: String,
-    @SerializedName("buy_date")
+
+    @JsonProperty("trade_type")
+    val tradeType: TradeType,
+
+    @JsonProperty("buy_date")
     val buyDate: String,
-    @SerializedName("buy_average")
+
+    @JsonProperty("buy_average")
     val buyAverage: Double,
-    @SerializedName("sell_date")
+
+    @JsonProperty("sell_date")
     val sellDate: String,
-    @SerializedName("sell_average")
+
+    @JsonProperty("sell_average")
     val sellAverage: Double,
-    @SerializedName("buy_amount")
+
+    @JsonProperty("buy_amount")
     val buyAmount: Double,
-    @SerializedName("sell_amount")
+
+    @JsonProperty("sell_amount")
     val sellAmount: Double
 )
 
@@ -65,7 +78,7 @@ data class TradePnlEntry(
  * @see <a href="https://upstox.com/developer/api-documentation/get-trade-charges">Get Trade Charges API</a>
  */
 data class TradeChargesResponse(
-    @SerializedName("charges_breakdown")
+    @JsonProperty("charges_breakdown")
     val chargesBreakdown: TradeChargesBreakdown
 )
 
@@ -78,9 +91,16 @@ data class TradeChargesResponse(
  * @property charges Other charges components
  */
 data class TradeChargesBreakdown(
+    @JsonProperty("total")
     val total: Double,
+
+    @JsonProperty("brokerage")
     val brokerage: Double,
+
+    @JsonProperty("taxes")
     val taxes: TradeChargesTaxes,
+
+    @JsonProperty("charges")
     val charges: TradeChargesOther
 )
 
@@ -92,9 +112,13 @@ data class TradeChargesBreakdown(
  * @property stampDuty Stamp duty
  */
 data class TradeChargesTaxes(
+    @JsonProperty("gst")
     val gst: Double,
+
+    @JsonProperty("stt")
     val stt: Double,
-    @SerializedName("stamp_duty")
+
+    @JsonProperty("stamp_duty")
     val stampDuty: Double
 )
 
@@ -109,12 +133,21 @@ data class TradeChargesTaxes(
  * @property dematTransaction Demat transaction charges
  */
 data class TradeChargesOther(
+    @JsonProperty("transaction")
     val transaction: Double,
+
+    @JsonProperty("clearing")
     val clearing: Double,
+
+    @JsonProperty("ipft")
     val ipft: Double? = null,
+
+    @JsonProperty("others")
     val others: Double? = null,
-    @SerializedName("sebi_turnover")
+
+    @JsonProperty("sebi_turnover")
     val sebiTurnover: Double,
-    @SerializedName("demat_transaction")
+
+    @JsonProperty("demat_transaction")
     val dematTransaction: Double? = null
 )

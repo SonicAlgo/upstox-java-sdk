@@ -3,6 +3,7 @@ package io.github.sonicalgo.upstox.api
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.UpstoxConstants
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
+import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.request.ConvertPositionParams
 import io.github.sonicalgo.upstox.model.response.ConvertPositionResponse
 import io.github.sonicalgo.upstox.model.response.Holding
@@ -15,17 +16,17 @@ import io.github.sonicalgo.upstox.model.response.Position
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val portfolioApi = upstox.getPortfolioApi()
  *
  * // Get positions
- * val positions = upstox.getPortfolioApi().getPositions()
+ * val positions = portfolioApi.getPositions()
  * positions.forEach { position ->
  *     println("${position.tradingSymbol}: ${position.quantity} @ ${position.averagePrice}")
  *     println("P&L: ${position.pnl}")
  * }
  *
  * // Get holdings
- * val holdings = upstox.getPortfolioApi().getHoldings()
+ * val holdings = portfolioApi.getHoldings()
  * holdings.forEach { holding ->
  *     println("${holding.tradingSymbol}: ${holding.quantity} shares")
  * }
@@ -34,7 +35,7 @@ import io.github.sonicalgo.upstox.model.response.Position
  * @see <a href="https://upstox.com/developer/api-documentation/get-positions">Get Positions API</a>
  * @see <a href="https://upstox.com/developer/api-documentation/get-holdings">Get Holdings API</a>
  */
-class PortfolioApi private constructor() {
+class PortfolioApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Gets all current positions.
@@ -64,10 +65,11 @@ class PortfolioApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-positions">Get Positions API</a>
      */
     fun getPositions(): List<Position> {
-        return ApiClient.get(
+        val response: UpstoxResponse<List<Position>> = apiClient.get(
             endpoint = Endpoints.GET_POSITIONS,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -92,10 +94,11 @@ class PortfolioApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-mtf-positions">Get MTF Positions API</a>
      */
     fun getMtfPositions(): List<Position> {
-        return ApiClient.get(
+        val response: UpstoxResponse<List<Position>> = apiClient.get(
             endpoint = Endpoints.GET_MTF_POSITIONS,
-            baseUrl = UpstoxConstants.BASE_URL_V3
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V3
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -109,8 +112,8 @@ class PortfolioApi private constructor() {
      *
      * val response = portfolioApi.convertPosition(ConvertPositionParams(
      *     instrumentToken = "NSE_EQ|INE528G01035",
-     *     newProduct = Product.D,
-     *     oldProduct = Product.I,
+     *     newProduct = Product.DELIVERY,
+     *     oldProduct = Product.INTRADAY,
      *     transactionType = TransactionType.BUY,
      *     quantity = 1
      * ))
@@ -124,11 +127,12 @@ class PortfolioApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/convert-positions">Convert Positions API</a>
      */
     fun convertPosition(params: ConvertPositionParams): ConvertPositionResponse {
-        return ApiClient.put(
+        val response: UpstoxResponse<ConvertPositionResponse> = apiClient.put(
             endpoint = Endpoints.CONVERT_POSITION,
             body = params,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -158,10 +162,11 @@ class PortfolioApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-holdings">Get Holdings API</a>
      */
     fun getHoldings(): List<Holding> {
-        return ApiClient.get(
+        val response: UpstoxResponse<List<Holding>> = apiClient.get(
             endpoint = Endpoints.GET_HOLDINGS,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
@@ -169,9 +174,5 @@ class PortfolioApi private constructor() {
         const val GET_MTF_POSITIONS = "/portfolio/mtf-positions"
         const val CONVERT_POSITION = "/portfolio/convert-position"
         const val GET_HOLDINGS = "/portfolio/long-term-holdings"
-    }
-
-    companion object {
-        internal val instance by lazy { PortfolioApi() }
     }
 }

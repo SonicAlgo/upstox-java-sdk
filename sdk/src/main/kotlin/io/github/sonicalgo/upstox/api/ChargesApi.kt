@@ -3,8 +3,10 @@ package io.github.sonicalgo.upstox.api
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.UpstoxConstants
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
+import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.request.BrokerageParams
 import io.github.sonicalgo.upstox.model.response.BrokerageResponse
+import io.github.sonicalgo.upstox.util.toQueryParams
 
 /**
  * API module for brokerage charges calculations.
@@ -13,13 +15,13 @@ import io.github.sonicalgo.upstox.model.response.BrokerageResponse
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val chargesApi = upstox.getChargesApi()
  *
  * // Calculate brokerage for a trade
- * val brokerage = upstox.getChargesApi().getBrokerage(BrokerageParams(
+ * val brokerage = chargesApi.getBrokerage(BrokerageParams(
  *     instrumentToken = "NSE_EQ|INE669E01016",
  *     quantity = 10,
- *     product = Product.D,
+ *     product = Product.DELIVERY,
  *     transactionType = TransactionType.BUY,
  *     price = 100.0
  * ))
@@ -29,7 +31,7 @@ import io.github.sonicalgo.upstox.model.response.BrokerageResponse
  * @see <a href="https://upstox.com/developer/api-documentation/get-brokerage">Get Brokerage API</a>
  * @see MarginsApi for margin calculations
  */
-class ChargesApi private constructor() {
+class ChargesApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Calculates the brokerage and other charges for a potential trade.
@@ -45,7 +47,7 @@ class ChargesApi private constructor() {
      * val brokerage = chargesApi.getBrokerage(BrokerageParams(
      *     instrumentToken = "NSE_EQ|INE669E01016",
      *     quantity = 10,
-     *     product = Product.D,
+     *     product = Product.DELIVERY,
      *     transactionType = TransactionType.BUY,
      *     price = 100.0
      * ))
@@ -62,18 +64,15 @@ class ChargesApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-brokerage">Get Brokerage API</a>
      */
     fun getBrokerage(params: BrokerageParams): BrokerageResponse {
-        return ApiClient.get(
+        val response: UpstoxResponse<BrokerageResponse> = apiClient.get(
             endpoint = Endpoints.GET_BROKERAGE,
-            params = params,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            queryParams = toQueryParams(params),
+            overrideBaseUrl = UpstoxConstants.BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
         const val GET_BROKERAGE = "/charges/brokerage"
-    }
-
-    companion object {
-        internal val instance by lazy { ChargesApi() }
     }
 }

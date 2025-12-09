@@ -1,7 +1,7 @@
 package io.github.sonicalgo.upstox.api
 
 import io.github.sonicalgo.upstox.config.ApiClient
-import io.github.sonicalgo.upstox.config.UpstoxConstants
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_V2
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
 import io.github.sonicalgo.upstox.model.common.PaginatedResponse
 import io.github.sonicalgo.upstox.model.common.UpstoxResponse
@@ -11,6 +11,7 @@ import io.github.sonicalgo.upstox.model.request.TradePnlReportParams
 import io.github.sonicalgo.upstox.model.response.TradeChargesResponse
 import io.github.sonicalgo.upstox.model.response.TradePnlEntry
 import io.github.sonicalgo.upstox.model.response.TradePnlMetadata
+import io.github.sonicalgo.upstox.util.toQueryParams
 
 /**
  * API module for trade profit and loss reports.
@@ -19,18 +20,18 @@ import io.github.sonicalgo.upstox.model.response.TradePnlMetadata
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val pnlApi = upstox.getTradePnlApi()
  *
  * // Get report metadata
- * val metadata = upstox.getTradePnlApi().getReportMetadata(TradePnlMetadataParams(
- *     segment = TradeSegment.EQ,
+ * val metadata = pnlApi.getReportMetadata(TradePnlMetadataParams(
+ *     segment = TradeSegment.EQUITY,
  *     financialYear = "2324"
  * ))
  * println("Total trades: ${metadata.tradesCount}")
  *
  * // Get P&L report
- * val report = upstox.getTradePnlApi().getProfitAndLossReport(TradePnlReportParams(
- *     segment = TradeSegment.EQ,
+ * val report = pnlApi.getProfitAndLossReport(TradePnlReportParams(
+ *     segment = TradeSegment.EQUITY,
  *     financialYear = "2324",
  *     pageNumber = 1,
  *     pageSize = 100
@@ -39,7 +40,7 @@ import io.github.sonicalgo.upstox.model.response.TradePnlMetadata
  *
  * @see <a href="https://upstox.com/developer/api-documentation/get-report-meta-data">Get Report Metadata API</a>
  */
-class TradePnlApi private constructor() {
+class TradePnlApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Gets metadata about the P&L report.
@@ -51,7 +52,7 @@ class TradePnlApi private constructor() {
      * val pnlApi = upstox.getTradePnlApi()
      *
      * val metadata = pnlApi.getReportMetadata(TradePnlMetadataParams(
-     *     segment = TradeSegment.EQ,
+     *     segment = TradeSegment.EQUITY,
      *     financialYear = "2324",
      *     fromDate = "01-04-2023",
      *     toDate = "31-03-2024"
@@ -67,7 +68,12 @@ class TradePnlApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-report-meta-data">Get Report Metadata API</a>
      */
     fun getReportMetadata(params: TradePnlMetadataParams): TradePnlMetadata {
-        return ApiClient.get(Endpoints.GET_REPORT_METADATA, params, UpstoxConstants.BASE_URL_V2)
+        val response: UpstoxResponse<TradePnlMetadata> = apiClient.get(
+            endpoint = Endpoints.GET_REPORT_METADATA,
+            queryParams = toQueryParams(params),
+            overrideBaseUrl = BASE_URL_V2
+        )
+        return response.dataOrThrow()
     }
 
     /**
@@ -80,7 +86,7 @@ class TradePnlApi private constructor() {
      * val pnlApi = upstox.getTradePnlApi()
      *
      * val report = pnlApi.getProfitAndLossReport(TradePnlReportParams(
-     *     segment = TradeSegment.EQ,
+     *     segment = TradeSegment.EQUITY,
      *     financialYear = "2324",
      *     pageNumber = 1,
      *     pageSize = 100,
@@ -100,8 +106,10 @@ class TradePnlApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-profit-and-loss-report">Get P&L Report API</a>
      */
     fun getProfitAndLossReport(params: TradePnlReportParams): PaginatedResponse<List<TradePnlEntry>> {
-        val response: UpstoxResponse<List<TradePnlEntry>> = ApiClient.get(
-            Endpoints.GET_PROFIT_AND_LOSS_REPORT, params, UpstoxConstants.BASE_URL_V2, unwrap = false
+        val response: UpstoxResponse<List<TradePnlEntry>> = apiClient.get(
+            endpoint = Endpoints.GET_PROFIT_AND_LOSS_REPORT,
+            queryParams = toQueryParams(params),
+            overrideBaseUrl = BASE_URL_V2
         )
         return PaginatedResponse(
             status = response.status,
@@ -121,7 +129,7 @@ class TradePnlApi private constructor() {
      * val pnlApi = upstox.getTradePnlApi()
      *
      * val charges = pnlApi.getTradeCharges(TradeChargesParams(
-     *     segment = TradeSegment.EQ,
+     *     segment = TradeSegment.EQUITY,
      *     financialYear = "2324",
      *     fromDate = "01-04-2023",
      *     toDate = "31-03-2024"
@@ -139,16 +147,17 @@ class TradePnlApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-trade-charges">Get Trade Charges API</a>
      */
     fun getTradeCharges(params: TradeChargesParams): TradeChargesResponse {
-        return ApiClient.get(Endpoints.GET_TRADE_CHARGES, params, UpstoxConstants.BASE_URL_V2)
+        val response: UpstoxResponse<TradeChargesResponse> = apiClient.get(
+            endpoint = Endpoints.GET_TRADE_CHARGES,
+            queryParams = toQueryParams(params),
+            overrideBaseUrl = BASE_URL_V2
+        )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
         const val GET_REPORT_METADATA = "/trade/profit-loss/metadata"
         const val GET_PROFIT_AND_LOSS_REPORT = "/trade/profit-loss/data"
         const val GET_TRADE_CHARGES = "/trade/profit-loss/charges"
-    }
-
-    companion object {
-        internal val instance by lazy { TradePnlApi() }
     }
 }

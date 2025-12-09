@@ -1,6 +1,9 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.sonicalgo.upstox.model.enums.Exchange
+import io.github.sonicalgo.upstox.model.enums.OrderType
+import io.github.sonicalgo.upstox.model.enums.Product
 
 /**
  * User profile information.
@@ -9,11 +12,11 @@ import com.google.gson.annotations.SerializedName
  *
  * @property email User's email address
  * @property exchanges List of enabled exchanges (NSE, NFO, BSE, CDS, BFO, BCD)
- * @property products Product types enabled (I, D, CO, MTF)
+ * @property products Product types enabled (INTRADAY, DELIVERY, COVER_ORDER, MTF)
  * @property broker Broker identifier
  * @property userId Unique user identifier (UCC)
  * @property userName User's registered name
- * @property orderTypes Supported order types (MARKET, LIMIT, SL, SL-M)
+ * @property orderTypes Supported order types (MARKET, LIMIT, SL, SL_M)
  * @property userType User registration role (typically "individual")
  * @property poa Power of attorney authorization status
  * @property ddpi DDPI (Demat Debit and Pledge Instruction) authorization status
@@ -21,21 +24,37 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/get-profile">Get Profile API</a>
  */
 data class UserProfile(
+    @JsonProperty("email")
     val email: String,
-    val exchanges: List<String>,
-    val products: List<String>,
+
+    @JsonProperty("exchanges")
+    val exchanges: List<Exchange>,
+
+    @JsonProperty("products")
+    val products: List<Product>,
+
+    @JsonProperty("broker")
     val broker: String,
-    @SerializedName("user_id")
+
+    @JsonProperty("user_id")
     val userId: String,
-    @SerializedName("user_name")
+
+    @JsonProperty("user_name")
     val userName: String,
-    @SerializedName("order_types")
-    val orderTypes: List<String>,
-    @SerializedName("user_type")
+
+    @JsonProperty("order_types")
+    val orderTypes: List<OrderType>,
+
+    @JsonProperty("user_type")
     val userType: String,
+
+    @JsonProperty("poa")
     val poa: Boolean,
+
+    @JsonProperty("ddpi")
     val ddpi: Boolean? = null,
-    @SerializedName("is_active")
+
+    @JsonProperty("is_active")
     val isActive: Boolean
 )
 
@@ -49,7 +68,10 @@ data class UserProfile(
  * @see <a href="https://upstox.com/developer/api-documentation/get-user-fund-margin">Get Funds and Margin API</a>
  */
 data class FundsAndMargin(
+    @JsonProperty("equity")
     val equity: SegmentMargin? = null,
+
+    @JsonProperty("commodity")
     val commodity: SegmentMargin? = null
 )
 
@@ -65,18 +87,24 @@ data class FundsAndMargin(
  * @property exposureMargin Futures/options margin blocked for exposure
  */
 data class SegmentMargin(
-    @SerializedName("used_margin")
+    @JsonProperty("used_margin")
     val usedMargin: Double,
-    @SerializedName("payin_amount")
+
+    @JsonProperty("payin_amount")
     val payinAmount: Double,
-    @SerializedName("span_margin")
+
+    @JsonProperty("span_margin")
     val spanMargin: Double,
-    @SerializedName("adhoc_margin")
+
+    @JsonProperty("adhoc_margin")
     val adhocMargin: Double,
-    @SerializedName("notional_cash")
+
+    @JsonProperty("notional_cash")
     val notionalCash: Double,
-    @SerializedName("available_margin")
+
+    @JsonProperty("available_margin")
     val availableMargin: Double,
-    @SerializedName("exposure_margin")
+
+    @JsonProperty("exposure_margin")
     val exposureMargin: Double
 )

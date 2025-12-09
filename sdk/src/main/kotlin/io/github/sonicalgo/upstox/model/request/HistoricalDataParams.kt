@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.request
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.sonicalgo.upstox.model.enums.CandleUnit
 
 /**
@@ -37,13 +37,19 @@ import io.github.sonicalgo.upstox.model.enums.CandleUnit
  * @see <a href="https://upstox.com/developer/api-documentation/v3/get-historical-candle-data">Historical Candle API</a>
  */
 data class HistoricalCandleParams(
-    @SerializedName("instrument_key")
+    @JsonProperty("instrument_key")
     val instrumentKey: String,
+
+    @JsonProperty("unit")
     val unit: CandleUnit,
+
+    @JsonProperty("interval")
     val interval: Int,
-    @SerializedName("to_date")
+
+    @JsonProperty("to_date")
     val toDate: String,
-    @SerializedName("from_date")
+
+    @JsonProperty("from_date")
     val fromDate: String? = null
 )
 
@@ -70,9 +76,13 @@ data class HistoricalCandleParams(
  * @see <a href="https://upstox.com/developer/api-documentation/v3/get-intra-day-candle-data">Intraday Candle API</a>
  */
 data class IntradayCandleParams(
-    @SerializedName("instrument_key")
+    @JsonProperty("instrument_key")
     val instrumentKey: String,
+
+    @JsonProperty("unit")
     val unit: CandleUnit,
+
+    @JsonProperty("interval")
     val interval: Int
 )
 
@@ -101,11 +111,15 @@ data class IntradayCandleParams(
  * @see <a href="https://upstox.com/developer/api-documentation/get-expired-historical-candle-data">Expired Historical Candle API</a>
  */
 data class ExpiredHistoricalCandleParams(
-    @SerializedName("expired_instrument_key")
+    @JsonProperty("expired_instrument_key")
     val expiredInstrumentKey: String,
+
+    @JsonProperty("interval")
     val interval: String,
-    @SerializedName("to_date")
+
+    @JsonProperty("to_date")
     val toDate: String,
-    @SerializedName("from_date")
+
+    @JsonProperty("from_date")
     val fromDate: String
 )

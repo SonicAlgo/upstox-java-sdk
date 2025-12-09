@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.common
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * Standard Upstox API response wrapper.
@@ -30,8 +30,13 @@ import com.google.gson.annotations.SerializedName
  * @property errors List of errors (present when status is "error")
  */
 data class UpstoxResponse<T>(
+    @JsonProperty("status")
     val status: String,
+
+    @JsonProperty("data")
     val data: T? = null,
+
+    @JsonProperty("errors")
     val errors: List<UpstoxError>? = null
 ) {
     /** Returns true if the API call was successful. */
@@ -39,6 +44,23 @@ data class UpstoxResponse<T>(
 
     /** Returns true if the API call resulted in an error. */
     val isError: Boolean get() = status == "error"
+
+    /**
+     * Returns data if response is successful, otherwise throws exception.
+     *
+     * @return The response data
+     * @throws UpstoxApiException if response is not successful or data is null
+     */
+    fun dataOrThrow(): T {
+        if (!isSuccess) {
+            val errorMessage = errors?.firstOrNull()?.let { "${it.errorCode}: ${it.message}" }
+                ?: "API request failed with status: $status"
+            throw io.github.sonicalgo.upstox.exception.UpstoxApiException(errorMessage, null)
+        }
+        return data ?: throw io.github.sonicalgo.upstox.exception.UpstoxApiException(
+            "Response data is null", null
+        )
+    }
 }
 
 /**
@@ -62,16 +84,22 @@ data class UpstoxResponse<T>(
  * @see <a href="https://upstox.com/developer/api-documentation/error-codes">Upstox Error Codes</a>
  */
 data class UpstoxError(
-    @SerializedName("error_code")
+    @JsonProperty("error_code")
     val errorCode: String,
+
+    @JsonProperty("message")
     val message: String,
-    @SerializedName("property_path")
+
+    @JsonProperty("property_path")
     val propertyPath: String? = null,
-    @SerializedName("invalid_value")
+
+    @JsonProperty("invalid_value")
     val invalidValue: String? = null,
-    @SerializedName("order_id")
+
+    @JsonProperty("order_id")
     val orderId: String? = null,
-    @SerializedName("instrument_key")
+
+    @JsonProperty("instrument_key")
     val instrumentKey: String? = null
 )
 
@@ -88,9 +116,16 @@ data class UpstoxError(
  * @property errors List of errors if the request failed
  */
 data class UpstoxResponseWithMetadata<T>(
+    @JsonProperty("status")
     val status: String,
+
+    @JsonProperty("data")
     val data: T? = null,
+
+    @JsonProperty("metadata")
     val metadata: ResponseMetadata? = null,
+
+    @JsonProperty("errors")
     val errors: List<UpstoxError>? = null
 ) {
     val isSuccess: Boolean get() = status == "success"
@@ -102,6 +137,7 @@ data class UpstoxResponseWithMetadata<T>(
  * @property latency Time taken by API platform to process the request (milliseconds)
  */
 data class ResponseMetadata(
+    @JsonProperty("latency")
     val latency: Int? = null
 )
 
@@ -117,9 +153,16 @@ data class ResponseMetadata(
  * @property summary Summary statistics for the operation
  */
 data class MultiOrderResponse<T>(
+    @JsonProperty("status")
     val status: String,
+
+    @JsonProperty("data")
     val data: T? = null,
+
+    @JsonProperty("errors")
     val errors: List<UpstoxError>? = null,
+
+    @JsonProperty("summary")
     val summary: MultiOrderSummary? = null
 ) {
     val isSuccess: Boolean get() = status == "success"
@@ -135,10 +178,16 @@ data class MultiOrderResponse<T>(
  * @property error Number of failed orders
  */
 data class MultiOrderSummary(
+    @JsonProperty("total")
     val total: Int,
-    @SerializedName("payload_error")
+
+    @JsonProperty("payload_error")
     val payloadError: Int? = null,
+
+    @JsonProperty("success")
     val success: Int,
+
+    @JsonProperty("error")
     val error: Int
 )
 
@@ -151,13 +200,16 @@ data class MultiOrderSummary(
  * @property totalPages Total number of available pages
  */
 data class PageInfo(
-    @SerializedName("page_number")
+    @JsonProperty("page_number")
     val pageNumber: Int,
-    @SerializedName("page_size")
+
+    @JsonProperty("page_size")
     val pageSize: Int,
-    @SerializedName("total_records")
+
+    @JsonProperty("total_records")
     val totalRecords: Int? = null,
-    @SerializedName("total_pages")
+
+    @JsonProperty("total_pages")
     val totalPages: Int? = null
 )
 
@@ -171,10 +223,16 @@ data class PageInfo(
  * @property metaData Metadata containing pagination information
  */
 data class PaginatedResponse<T>(
+    @JsonProperty("status")
     val status: String,
+
+    @JsonProperty("data")
     val data: T? = null,
+
+    @JsonProperty("errors")
     val errors: List<UpstoxError>? = null,
-    @SerializedName("meta_data")
+
+    @JsonProperty("meta_data")
     val metaData: PaginationMetadata? = null
 ) {
     val isSuccess: Boolean get() = status == "success"
@@ -186,5 +244,6 @@ data class PaginatedResponse<T>(
  * @property page Page information
  */
 data class PaginationMetadata(
+    @JsonProperty("page")
     val page: PageInfo
 )

@@ -1,8 +1,9 @@
 package io.github.sonicalgo.upstox.api
 
-import com.google.gson.JsonObject
+import io.github.sonicalgo.core.client.HttpClient
 import io.github.sonicalgo.upstox.config.ApiClient
-import io.github.sonicalgo.upstox.config.UpstoxConstants
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_V2
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_V3
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
 import io.github.sonicalgo.upstox.model.enums.OhlcInterval
 import io.github.sonicalgo.upstox.model.response.FullMarketQuote
@@ -19,21 +20,21 @@ import io.github.sonicalgo.upstox.validation.Validators
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val marketQuoteApi = upstox.getMarketQuoteApi()
  *
  * // Get full market quote
- * val quotes = upstox.getMarketQuoteApi().getFullQuote(listOf("NSE_EQ|INE669E01016"))
+ * val quotes = marketQuoteApi.getFullQuote(listOf("NSE_EQ|INE669E01016"))
  * quotes.forEach { (key, quote) ->
  *     println("$key: LTP=${quote.lastPrice}, Volume=${quote.volume}")
  * }
  *
  * // Get LTP
- * val ltpQuotes = upstox.getMarketQuoteApi().getLtp(listOf("NSE_EQ|INE669E01016"))
+ * val ltpQuotes = marketQuoteApi.getLtp(listOf("NSE_EQ|INE669E01016"))
  * ```
  *
  * @see <a href="https://upstox.com/developer/api-documentation/get-full-market-quote">Full Market Quote API</a>
  */
-class MarketQuoteApi private constructor() {
+class MarketQuoteApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Gets full market quotes for instruments.
@@ -68,10 +69,10 @@ class MarketQuoteApi private constructor() {
         Validators.validateListSize(instrumentKeys, MAX_QUOTE_INSTRUMENTS, "getFullQuote")
 
         val queryParams = mapOf("instrument_key" to instrumentKeys.joinToString(","))
-        val rawResponse = ApiClient.getRaw(
+        val rawResponse = apiClient.getRaw(
             endpoint = Endpoints.GET_FULL_QUOTE,
             queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
         return parseMapResponse(rawResponse)
     }
@@ -110,10 +111,10 @@ class MarketQuoteApi private constructor() {
             "instrument_key" to instrumentKeys.joinToString(","),
             "interval" to interval.toString()
         )
-        val rawResponse = ApiClient.getRaw(
+        val rawResponse = apiClient.getRaw(
             endpoint = Endpoints.GET_OHLC_QUOTE,
             queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V3
+            overrideBaseUrl = BASE_URL_V3
         )
         return parseMapResponse(rawResponse)
     }
@@ -143,10 +144,10 @@ class MarketQuoteApi private constructor() {
         Validators.validateListSize(instrumentKeys, MAX_QUOTE_INSTRUMENTS, "getLtp")
 
         val queryParams = mapOf("instrument_key" to instrumentKeys.joinToString(","))
-        val rawResponse = ApiClient.getRaw(
+        val rawResponse = apiClient.getRaw(
             endpoint = Endpoints.GET_LTP,
             queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V3
+            overrideBaseUrl = BASE_URL_V3
         )
         return parseMapResponse(rawResponse)
     }
@@ -180,23 +181,25 @@ class MarketQuoteApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/option-greek">Option Greek API</a>
      */
     fun getOptionGreeks(instrumentKeys: List<String>): Map<String, OptionGreeksQuote> {
+        Validators.validateListSize(instrumentKeys, MAX_OPTION_GREEKS_INSTRUMENTS, "getOptionGreeks")
+
         val queryParams = mapOf("instrument_key" to instrumentKeys.joinToString(","))
-        val rawResponse = ApiClient.getRaw(
+        val rawResponse = apiClient.getRaw(
             endpoint = Endpoints.GET_OPTION_GREEKS,
             queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V3
+            overrideBaseUrl = BASE_URL_V3
         )
         return parseMapResponse(rawResponse)
     }
 
     private inline fun <reified T> parseMapResponse(rawResponse: String): Map<String, T> {
-        val jsonObject = ApiClient.gson.fromJson(rawResponse, JsonObject::class.java)
-        val dataObject = jsonObject.getAsJsonObject("data")
+        val rootNode = HttpClient.objectMapper.readTree(rawResponse)
+        val dataNode = rootNode.get("data") ?: return emptyMap()
         val result = mutableMapOf<String, T>()
 
-        dataObject?.entrySet()?.forEach { entry ->
-            val value = ApiClient.gson.fromJson(entry.value, T::class.java)
-            result[entry.key] = value
+        dataNode.fields().forEach { (key, valueNode) ->
+            val value = HttpClient.objectMapper.treeToValue(valueNode, T::class.java)
+            result[key] = value
         }
 
         return result
@@ -213,6 +216,7 @@ class MarketQuoteApi private constructor() {
         /** Maximum number of instruments for quote APIs */
         private const val MAX_QUOTE_INSTRUMENTS = 500
 
-        internal val instance by lazy { MarketQuoteApi() }
+        /** Maximum number of instruments for option Greeks API */
+        private const val MAX_OPTION_GREEKS_INSTRUMENTS = 50
     }
 }

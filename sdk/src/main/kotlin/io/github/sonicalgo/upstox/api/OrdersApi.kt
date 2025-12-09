@@ -2,8 +2,9 @@ package io.github.sonicalgo.upstox.api
 
 import io.github.sonicalgo.upstox.config.ApiClient
 import io.github.sonicalgo.upstox.config.UpstoxConfig
-import io.github.sonicalgo.upstox.config.UpstoxConfig.sandboxEnabled
-import io.github.sonicalgo.upstox.config.UpstoxConstants
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_HFT
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_SANDBOX
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_V2
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
 import io.github.sonicalgo.upstox.model.common.MultiOrderResponse
 import io.github.sonicalgo.upstox.model.common.PaginatedResponse
@@ -11,6 +12,7 @@ import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.common.UpstoxResponseWithMetadata
 import io.github.sonicalgo.upstox.model.request.*
 import io.github.sonicalgo.upstox.model.response.*
+import io.github.sonicalgo.upstox.util.toQueryParams
 import io.github.sonicalgo.upstox.validation.Validators
 
 /**
@@ -19,18 +21,18 @@ import io.github.sonicalgo.upstox.validation.Validators
  * Provides methods for placing, modifying, cancelling orders, and retrieving
  * order/trade information.
  *
- * Note: When sandbox mode is enabled via [sandboxEnabled],
+ * Note: When sandbox mode is enabled,
  * order operations (place, modify, cancel) will use the sandbox token automatically.
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val ordersApi = upstox.getOrdersApi()
  *
  * // Place an order
- * val orderResponse = upstox.getOrdersApi().placeOrder(PlaceOrderParams(
+ * val orderResponse = ordersApi.placeOrder(PlaceOrderParams(
  *     instrumentToken = "NSE_EQ|INE669E01016",
  *     quantity = 1,
- *     product = Product.D,
+ *     product = Product.DELIVERY,
  *     validity = Validity.DAY,
  *     price = 0.0,
  *     orderType = OrderType.MARKET,
@@ -41,19 +43,22 @@ import io.github.sonicalgo.upstox.validation.Validators
  * ))
  *
  * // Get order details
- * val order = upstox.getOrdersApi().getOrderDetails(orderResponse.orderIds.first())
+ * val order = ordersApi.getOrderDetails(orderResponse.orderIds.first())
  * ```
  *
  * @see <a href="https://upstox.com/developer/api-documentation/v3/place-order">Place Order API</a>
  */
-class OrdersApi private constructor() {
+class OrdersApi internal constructor(
+    private val apiClient: ApiClient,
+    private val config: UpstoxConfig
+) {
 
     /**
      * Returns the appropriate base URL for order operations.
      * Uses sandbox URL when sandbox mode is enabled, otherwise returns the regular URL.
      */
     private fun getOrderBaseUrl(regularUrl: String): String {
-        return if (UpstoxConfig.sandboxEnabled) UpstoxConstants.BASE_URL_SANDBOX else regularUrl
+        return if (config.sandboxEnabled) BASE_URL_SANDBOX else regularUrl
     }
 
     /**
@@ -62,7 +67,7 @@ class OrdersApi private constructor() {
      * Uses the HFT (High Frequency Trading) endpoint for faster execution.
      * Returns order IDs which may be multiple if slicing is enabled.
      *
-     * Note: Uses sandbox token and sandbox endpoint when [sandboxEnabled] is true.
+     * Note: Uses sandbox token and sandbox endpoint when sandbox mode is enabled.
      *
      * Example:
      * ```kotlin
@@ -71,7 +76,7 @@ class OrdersApi private constructor() {
      * val response = ordersApi.placeOrder(PlaceOrderParams(
      *     instrumentToken = "NSE_EQ|INE669E01016",
      *     quantity = 1,
-     *     product = Product.D,
+     *     product = Product.DELIVERY,
      *     validity = Validity.DAY,
      *     price = 100.0,
      *     orderType = OrderType.LIMIT,
@@ -92,11 +97,10 @@ class OrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/v3/place-order">Place Order V3 API</a>
      */
     fun placeOrder(params: PlaceOrderParams): UpstoxResponseWithMetadata<PlaceOrderResponse> {
-        val response: UpstoxResponse<PlaceOrderResponse> = ApiClient.post(
+        val response: UpstoxResponse<PlaceOrderResponse> = apiClient.post(
             endpoint = Endpoints.PLACE_ORDER,
             body = params,
-            baseUrl = getOrderBaseUrl(UpstoxConstants.BASE_URL_HFT),
-            unwrap = false
+            overrideBaseUrl = getOrderBaseUrl(BASE_URL_HFT)
         )
         return UpstoxResponseWithMetadata(status = response.status, data = response.data)
     }
@@ -107,7 +111,7 @@ class OrdersApi private constructor() {
      * Allows placing up to 25 orders at once. BUY orders are executed
      * before SELL orders.
      *
-     * Note: Uses sandbox token and sandbox endpoint when [sandboxEnabled] is true.
+     * Note: Uses sandbox token and sandbox endpoint when sandbox mode is enabled.
      *
      * Example:
      * ```kotlin
@@ -147,11 +151,10 @@ class OrdersApi private constructor() {
     fun placeMultiOrder(orders: List<MultiOrderParams>): MultiOrderResponse<List<MultiOrderPlaceResponse>> {
         Validators.validateListSize(orders, MAX_MULTI_ORDER_COUNT, "placeMultiOrder")
 
-        val response: UpstoxResponse<List<MultiOrderPlaceResponse>> = ApiClient.post(
+        val response: UpstoxResponse<List<MultiOrderPlaceResponse>> = apiClient.post(
             endpoint = Endpoints.PLACE_MULTI_ORDER,
             body = orders,
-            baseUrl = getOrderBaseUrl(UpstoxConstants.BASE_URL_V2),
-            unwrap = false
+            overrideBaseUrl = getOrderBaseUrl(BASE_URL_V2)
         )
         return MultiOrderResponse(
             status = response.status,
@@ -163,7 +166,7 @@ class OrdersApi private constructor() {
     /**
      * Modifies an existing order.
      *
-     * Note: Uses sandbox token and sandbox endpoint when [sandboxEnabled] is true.
+     * Note: Uses sandbox token and sandbox endpoint when sandbox mode is enabled.
      *
      * Example:
      * ```kotlin
@@ -188,11 +191,10 @@ class OrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/v3/modify-order">Modify Order V3 API</a>
      */
     fun modifyOrder(params: ModifyOrderParams): UpstoxResponseWithMetadata<ModifyOrderResponse> {
-        val response: UpstoxResponse<ModifyOrderResponse> = ApiClient.put(
+        val response: UpstoxResponse<ModifyOrderResponse> = apiClient.put(
             endpoint = Endpoints.MODIFY_ORDER,
             body = params,
-            baseUrl = getOrderBaseUrl(UpstoxConstants.BASE_URL_HFT),
-            unwrap = false
+            overrideBaseUrl = getOrderBaseUrl(BASE_URL_HFT)
         )
         return UpstoxResponseWithMetadata(status = response.status, data = response.data)
     }
@@ -200,7 +202,7 @@ class OrdersApi private constructor() {
     /**
      * Cancels an existing order.
      *
-     * Note: Uses sandbox token and sandbox endpoint when [sandboxEnabled] is true.
+     * Note: Uses sandbox token and sandbox endpoint when sandbox mode is enabled.
      *
      * Example:
      * ```kotlin
@@ -217,11 +219,10 @@ class OrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/v3/cancel-order">Cancel Order V3 API</a>
      */
     fun cancelOrder(orderId: String): UpstoxResponseWithMetadata<CancelOrderResponse> {
-        val response: UpstoxResponse<CancelOrderResponse> = ApiClient.get(
+        val response: UpstoxResponse<CancelOrderResponse> = apiClient.get(
             endpoint = Endpoints.CANCEL_ORDER,
             queryParams = mapOf("order_id" to orderId),
-            baseUrl = getOrderBaseUrl(UpstoxConstants.BASE_URL_HFT),
-            unwrap = false
+            overrideBaseUrl = getOrderBaseUrl(BASE_URL_HFT)
         )
         return UpstoxResponseWithMetadata(status = response.status, data = response.data)
     }
@@ -231,7 +232,7 @@ class OrdersApi private constructor() {
      *
      * Can filter by segment or tag. Maximum 50 orders per request.
      *
-     * Note: Uses sandbox token when [sandboxEnabled] is true.
+     * Note: Uses sandbox token when sandbox mode is enabled.
      *
      * Example:
      * ```kotlin
@@ -258,11 +259,10 @@ class OrdersApi private constructor() {
         params?.segment?.let { queryParams["segment"] = it.name }
         params?.tag?.let { queryParams["tag"] = it }
 
-        val response: UpstoxResponse<MultiOrderCancelResponse> = ApiClient.get(
+        val response: UpstoxResponse<MultiOrderCancelResponse> = apiClient.get(
             endpoint = Endpoints.CANCEL_MULTI_ORDER,
             queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V2,
-            unwrap = false
+            overrideBaseUrl = BASE_URL_V2
         )
         return MultiOrderResponse(
             status = response.status,
@@ -298,11 +298,10 @@ class OrdersApi private constructor() {
      */
     @JvmOverloads
     fun exitAllPositions(params: ExitAllPositionsParams? = null): MultiOrderResponse<ExitPositionsResponse> {
-        val response: UpstoxResponse<ExitPositionsResponse> = ApiClient.post(
+        val response: UpstoxResponse<ExitPositionsResponse> = apiClient.post(
             endpoint = Endpoints.EXIT_ALL_POSITIONS,
             body = params,
-            baseUrl = UpstoxConstants.BASE_URL_V2,
-            unwrap = false
+            overrideBaseUrl = BASE_URL_V2
         )
         return MultiOrderResponse(
             status = response.status,
@@ -330,11 +329,12 @@ class OrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-order-details">Get Order Details API</a>
      */
     fun getOrderDetails(orderId: String): Order {
-        return ApiClient.get(
+        val response: UpstoxResponse<Order> = apiClient.get(
             endpoint = Endpoints.GET_ORDER_DETAILS,
             queryParams = mapOf("order_id" to orderId),
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -365,11 +365,12 @@ class OrdersApi private constructor() {
         orderId?.let { queryParams["order_id"] = it }
         tag?.let { queryParams["tag"] = it }
 
-        return ApiClient.get(
+        val response: UpstoxResponse<List<Order>> = apiClient.get(
             endpoint = Endpoints.GET_ORDER_HISTORY,
             queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -391,10 +392,11 @@ class OrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-order-book">Get Order Book API</a>
      */
     fun getOrderBook(): List<Order> {
-        return ApiClient.get(
+        val response: UpstoxResponse<List<Order>> = apiClient.get(
             endpoint = Endpoints.GET_ORDER_BOOK,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -416,10 +418,11 @@ class OrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-trade-history">Get Trades API</a>
      */
     fun getTrades(): List<Trade> {
-        return ApiClient.get(
+        val response: UpstoxResponse<List<Trade>> = apiClient.get(
             endpoint = Endpoints.GET_TRADES,
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -442,11 +445,12 @@ class OrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-trades-by-order">Get Trades By Order API</a>
      */
     fun getTradesByOrder(orderId: String): List<Trade> {
-        return ApiClient.get(
+        val response: UpstoxResponse<List<Trade>> = apiClient.get(
             endpoint = Endpoints.GET_TRADES_BY_ORDER,
             queryParams = mapOf("order_id" to orderId),
-            baseUrl = UpstoxConstants.BASE_URL_V2
+            overrideBaseUrl = BASE_URL_V2
         )
+        return response.dataOrThrow()
     }
 
     /**
@@ -463,7 +467,7 @@ class OrdersApi private constructor() {
      *     endDate = "2024-03-31",
      *     pageNumber = 1,
      *     pageSize = 100,
-     *     segment = TradeSegment.EQ
+     *     segment = TradeSegment.EQUITY
      * ))
      * response.data?.forEach { trade ->
      *     println("${trade.tradeDate}: ${trade.scripName} - ${trade.transactionType}")
@@ -477,11 +481,10 @@ class OrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/get-historical-trades">Get Historical Trades API</a>
      */
     fun getHistoricalTrades(params: HistoricalTradesParams): PaginatedResponse<List<HistoricalTrade>> {
-        val response: UpstoxResponse<List<HistoricalTrade>> = ApiClient.get(
+        val response: UpstoxResponse<List<HistoricalTrade>> = apiClient.get(
             endpoint = Endpoints.GET_HISTORICAL_TRADES,
-            params = params,
-            baseUrl = UpstoxConstants.BASE_URL_V2,
-            unwrap = false
+            queryParams = toQueryParams(params),
+            overrideBaseUrl = BASE_URL_V2
         )
         return PaginatedResponse(
             status = response.status,
@@ -508,7 +511,5 @@ class OrdersApi private constructor() {
     companion object {
         /** Maximum number of orders that can be placed in a single placeMultiOrder call */
         private const val MAX_MULTI_ORDER_COUNT = 25
-
-        internal val instance by lazy { OrdersApi() }
     }
 }

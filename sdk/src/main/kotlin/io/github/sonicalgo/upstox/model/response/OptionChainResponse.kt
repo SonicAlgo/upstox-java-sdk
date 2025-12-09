@@ -1,6 +1,7 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.sonicalgo.upstox.model.enums.*
 
 /**
  * Option contract information.
@@ -16,10 +17,10 @@ import com.google.gson.annotations.SerializedName
  * @property tradingSymbol Trading symbol
  * @property tickSize Minimum price movement
  * @property lotSize Size of one lot
- * @property instrumentType Option type: CE (Call) or PE (Put)
+ * @property instrumentType Option type: CALL_OPTION or PUT_OPTION
  * @property freezeQuantity Maximum quantity that can be frozen
  * @property underlyingKey Instrument key of the underlying asset
- * @property underlyingType Underlying type: COM, INDEX, EQUITY, CUR, or IRD
+ * @property underlyingType Underlying type: COMMODITY, INDEX, EQUITY, CURRENCY, or INTEREST_RATE_DERIVATIVE
  * @property underlyingSymbol Symbol of underlying asset
  * @property strikePrice Option strike price
  * @property minimumLot Minimum lot size
@@ -27,34 +28,55 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/get-option-contracts">Option Contracts API</a>
  */
 data class OptionContract(
+    @JsonProperty("name")
     val name: String,
-    val segment: String,
-    val exchange: String,
+
+    @JsonProperty("segment")
+    val segment: Segment,
+
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("expiry")
     val expiry: String,
-    @SerializedName("instrument_key")
+
+    @JsonProperty("instrument_key")
     val instrumentKey: String,
-    @SerializedName("exchange_token")
+
+    @JsonProperty("exchange_token")
     val exchangeToken: String,
-    @SerializedName("trading_symbol")
+
+    @JsonProperty("trading_symbol")
     val tradingSymbol: String,
-    @SerializedName("tick_size")
+
+    @JsonProperty("tick_size")
     val tickSize: Double,
-    @SerializedName("lot_size")
+
+    @JsonProperty("lot_size")
     val lotSize: Int,
-    @SerializedName("instrument_type")
-    val instrumentType: String,
-    @SerializedName("freeze_quantity")
+
+    @JsonProperty("instrument_type")
+    val instrumentType: InstrumentType,
+
+    @JsonProperty("freeze_quantity")
     val freezeQuantity: Int,
-    @SerializedName("underlying_key")
+
+    @JsonProperty("underlying_key")
     val underlyingKey: String,
-    @SerializedName("underlying_type")
-    val underlyingType: String,
-    @SerializedName("underlying_symbol")
+
+    @JsonProperty("underlying_type")
+    val underlyingType: UnderlyingType,
+
+    @JsonProperty("underlying_symbol")
     val underlyingSymbol: String,
-    @SerializedName("strike_price")
+
+    @JsonProperty("strike_price")
     val strikePrice: Double,
-    @SerializedName("minimum_lot")
+
+    @JsonProperty("minimum_lot")
     val minimumLot: Int,
+
+    @JsonProperty("weekly")
     val weekly: Boolean
 )
 
@@ -73,17 +95,25 @@ data class OptionContract(
  * @see <a href="https://upstox.com/developer/api-documentation/get-pc-option-chain">Option Chain API</a>
  */
 data class OptionChainEntry(
+    @JsonProperty("expiry")
     val expiry: String,
+
+    @JsonProperty("pcr")
     val pcr: Double? = null,
-    @SerializedName("strike_price")
+
+    @JsonProperty("strike_price")
     val strikePrice: Double,
-    @SerializedName("underlying_key")
+
+    @JsonProperty("underlying_key")
     val underlyingKey: String,
-    @SerializedName("underlying_spot_price")
+
+    @JsonProperty("underlying_spot_price")
     val underlyingSpotPrice: Double,
-    @SerializedName("call_options")
+
+    @JsonProperty("call_options")
     val callOptions: OptionData,
-    @SerializedName("put_options")
+
+    @JsonProperty("put_options")
     val putOptions: OptionData
 )
 
@@ -95,11 +125,13 @@ data class OptionChainEntry(
  * @property optionGreeks Option Greeks for this option
  */
 data class OptionData(
-    @SerializedName("instrument_key")
+    @JsonProperty("instrument_key")
     val instrumentKey: String,
-    @SerializedName("market_data")
+
+    @JsonProperty("market_data")
     val marketData: OptionMarketData,
-    @SerializedName("option_greeks")
+
+    @JsonProperty("option_greeks")
     val optionGreeks: OptionGreeks
 )
 
@@ -117,20 +149,31 @@ data class OptionData(
  * @property prevOi Previous day's open interest
  */
 data class OptionMarketData(
+    @JsonProperty("ltp")
     val ltp: Double,
-    @SerializedName("close_price")
+
+    @JsonProperty("close_price")
     val closePrice: Double,
+
+    @JsonProperty("volume")
     val volume: Long,
+
+    @JsonProperty("oi")
     val oi: Long,
-    @SerializedName("bid_price")
+
+    @JsonProperty("bid_price")
     val bidPrice: Double,
-    @SerializedName("bid_qty")
+
+    @JsonProperty("bid_qty")
     val bidQty: Int,
-    @SerializedName("ask_price")
+
+    @JsonProperty("ask_price")
     val askPrice: Double,
-    @SerializedName("ask_qty")
+
+    @JsonProperty("ask_qty")
     val askQty: Int,
-    @SerializedName("prev_oi")
+
+    @JsonProperty("prev_oi")
     val prevOi: Long
 )
 
@@ -147,11 +190,22 @@ data class OptionMarketData(
  * @property pop Probability of Profit
  */
 data class OptionGreeks(
+    @JsonProperty("vega")
     val vega: Double,
+
+    @JsonProperty("theta")
     val theta: Double,
+
+    @JsonProperty("gamma")
     val gamma: Double,
+
+    @JsonProperty("delta")
     val delta: Double,
+
+    @JsonProperty("iv")
     val iv: Double,
+
+    @JsonProperty("pop")
     val pop: Double? = null
 )
 
@@ -169,10 +223,10 @@ data class OptionGreeks(
  * @property tradingSymbol Trading symbol
  * @property tickSize Minimum price movement
  * @property lotSize Size of one lot
- * @property instrumentType Instrument type: CE, PE, or FUT
+ * @property instrumentType Instrument type: FUTURES, CALL_OPTION, or PUT_OPTION
  * @property freezeQuantity Maximum quantity that can be frozen
  * @property underlyingKey Instrument key of the underlying
- * @property underlyingType Underlying type: COM, INDEX, EQUITY, CUR, or IRD
+ * @property underlyingType Underlying type: COMMODITY, INDEX, EQUITY, CURRENCY, or INTEREST_RATE_DERIVATIVE
  * @property underlyingSymbol Symbol of underlying
  * @property strikePrice Option strike price (not present for futures)
  * @property minimumLot Minimum lot size
@@ -180,33 +234,54 @@ data class OptionGreeks(
  * @see <a href="https://upstox.com/developer/api-documentation/get-expired-option-contracts">Expired Option Contracts API</a>
  */
 data class ExpiredContract(
+    @JsonProperty("name")
     val name: String,
-    val segment: String,
-    val exchange: String,
+
+    @JsonProperty("segment")
+    val segment: Segment,
+
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("expiry")
     val expiry: String,
-    @SerializedName("instrument_key")
+
+    @JsonProperty("instrument_key")
     val instrumentKey: String,
-    @SerializedName("exchange_token")
+
+    @JsonProperty("exchange_token")
     val exchangeToken: String,
-    @SerializedName("trading_symbol")
+
+    @JsonProperty("trading_symbol")
     val tradingSymbol: String,
-    @SerializedName("tick_size")
+
+    @JsonProperty("tick_size")
     val tickSize: Double,
-    @SerializedName("lot_size")
+
+    @JsonProperty("lot_size")
     val lotSize: Int,
-    @SerializedName("instrument_type")
-    val instrumentType: String,
-    @SerializedName("freeze_quantity")
+
+    @JsonProperty("instrument_type")
+    val instrumentType: InstrumentType,
+
+    @JsonProperty("freeze_quantity")
     val freezeQuantity: Int,
-    @SerializedName("underlying_key")
+
+    @JsonProperty("underlying_key")
     val underlyingKey: String,
-    @SerializedName("underlying_type")
-    val underlyingType: String,
-    @SerializedName("underlying_symbol")
+
+    @JsonProperty("underlying_type")
+    val underlyingType: UnderlyingType,
+
+    @JsonProperty("underlying_symbol")
     val underlyingSymbol: String,
-    @SerializedName("strike_price")
+
+    @JsonProperty("strike_price")
     val strikePrice: Double? = null,
-    @SerializedName("minimum_lot")
+
+    @JsonProperty("minimum_lot")
     val minimumLot: Int,
+
+    @JsonProperty("weekly")
     val weekly: Boolean? = null
 )

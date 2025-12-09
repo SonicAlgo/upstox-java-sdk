@@ -1,18 +1,8 @@
 package io.github.sonicalgo.upstox.model.instrument
 
-import com.google.gson.annotations.SerializedName
-
-/**
- * Represents an exchange on which instruments are traded.
- */
-enum class Exchange {
-    /** National Stock Exchange */
-    NSE,
-    /** Bombay Stock Exchange */
-    BSE,
-    /** Multi Commodity Exchange */
-    MCX
-}
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.sonicalgo.upstox.model.enums.Exchange
+import io.github.sonicalgo.upstox.model.enums.Segment
 
 /**
  * Type of instrument list to download from the Upstox instruments master.
@@ -77,69 +67,69 @@ enum class InstrumentDownloadType {
  * @see <a href="https://upstox.com/developer/api-documentation/instruments">Instruments API</a>
  */
 data class Instrument(
-    @SerializedName("instrument_key")
+    @JsonProperty("instrument_key")
     val instrumentKey: String,
 
-    @SerializedName("exchange_token")
+    @JsonProperty("exchange_token")
     val exchangeToken: String? = null,
 
-    @SerializedName("trading_symbol")
+    @JsonProperty("trading_symbol")
     val tradingSymbol: String? = null,
 
-    @SerializedName("name")
+    @JsonProperty("name")
     val name: String? = null,
 
-    @SerializedName("segment")
-    val segment: String? = null,
+    @JsonProperty("segment")
+    val segment: Segment? = null,
 
-    @SerializedName("exchange")
-    val exchange: String? = null,
+    @JsonProperty("exchange")
+    val exchange: Exchange? = null,
 
-    @SerializedName("instrument_type")
+    @JsonProperty("instrument_type")
     val instrumentType: String? = null,
 
-    @SerializedName("isin")
+    @JsonProperty("isin")
     val isin: String? = null,
 
-    @SerializedName("lot_size")
+    @JsonProperty("lot_size")
     val lotSize: Int? = null,
 
-    @SerializedName("freeze_quantity")
+    @JsonProperty("freeze_quantity")
     val freezeQuantity: Int? = null,
 
-    @SerializedName("tick_size")
+    @JsonProperty("tick_size")
     val tickSize: Double? = null,
 
-    @SerializedName("security_type")
+    @JsonProperty("security_type")
     val securityType: String? = null,
 
-    @SerializedName("expiry")
+    @JsonProperty("expiry")
     val expiry: String? = null,
 
-    @SerializedName("underlying_symbol")
+    @JsonProperty("underlying_symbol")
     val underlyingSymbol: String? = null,
 
-    @SerializedName("underlying_key")
+    @JsonProperty("underlying_key")
     val underlyingKey: String? = null,
 
-    @SerializedName("strike_price")
+    @JsonProperty("strike_price")
     val strikePrice: Double? = null,
 
-    @SerializedName("minimum_lot")
+    @JsonProperty("minimum_lot")
     val minimumLot: Int? = null,
 
-    @SerializedName("last_trading_date")
+    @JsonProperty("last_trading_date")
     val lastTradingDate: String? = null,
 
-    @SerializedName("mtf_enabled")
+    @JsonProperty("mtf_enabled")
     val mtfEnabled: Boolean? = null,
 
-    @SerializedName("mtf_bracket")
+    @JsonProperty("mtf_bracket")
     val mtfBracket: String? = null,
 
-    @SerializedName("intraday_margin")
+    @JsonProperty("intraday_margin")
     val intradayMargin: Double? = null,
 
-    @SerializedName("intraday_leverage")
+    @JsonProperty("intraday_leverage")
     val intradayLeverage: Double? = null
 )

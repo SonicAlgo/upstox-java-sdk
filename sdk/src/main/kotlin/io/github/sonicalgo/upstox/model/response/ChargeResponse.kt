@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * Brokerage charges breakdown.
@@ -11,6 +11,7 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/get-brokerage">Get Brokerage API</a>
  */
 data class BrokerageResponse(
+    @JsonProperty("charges")
     val charges: ChargesBreakdown
 )
 
@@ -24,12 +25,19 @@ data class BrokerageResponse(
  * @property dpPlan DP plan details
  */
 data class ChargesBreakdown(
+    @JsonProperty("total")
     val total: Double,
+
+    @JsonProperty("brokerage")
     val brokerage: Double,
+
+    @JsonProperty("taxes")
     val taxes: TaxBreakdown,
-    @SerializedName("other_charges")
+
+    @JsonProperty("other_charges")
     val otherCharges: OtherChargesBreakdown? = null,
-    @SerializedName("dp_plan")
+
+    @JsonProperty("dp_plan")
     val dpPlan: DpPlan? = null
 )
 
@@ -41,9 +49,13 @@ data class ChargesBreakdown(
  * @property stampDuty Stamp duty levied on the trade
  */
 data class TaxBreakdown(
+    @JsonProperty("gst")
     val gst: Double,
+
+    @JsonProperty("stt")
     val stt: Double,
-    @SerializedName("stamp_duty")
+
+    @JsonProperty("stamp_duty")
     val stampDuty: Double
 )
 
@@ -58,13 +70,22 @@ data class TaxBreakdown(
  * @property dematTransaction Demat transaction charges
  */
 data class OtherChargesBreakdown(
+    @JsonProperty("transaction")
     val transaction: Double,
+
+    @JsonProperty("clearing")
     val clearing: Double,
+
+    @JsonProperty("ipft")
     val ipft: Double? = null,
-    @SerializedName("sebi_turnover")
+
+    @JsonProperty("sebi_turnover")
     val sebiTurnover: Double,
+
+    @JsonProperty("others")
     val others: Double? = null,
-    @SerializedName("demat_transaction")
+
+    @JsonProperty("demat_transaction")
     val dematTransaction: Double? = null
 )
 
@@ -75,8 +96,10 @@ data class OtherChargesBreakdown(
  * @property minExpense Minimum expense under this plan
  */
 data class DpPlan(
+    @JsonProperty("name")
     val name: String,
-    @SerializedName("min_expense")
+
+    @JsonProperty("min_expense")
     val minExpense: Double
 )
 
@@ -91,10 +114,13 @@ data class DpPlan(
  * @see <a href="https://upstox.com/developer/api-documentation/margin">Margin API</a>
  */
 data class MarginResponse(
+    @JsonProperty("margins")
     val margins: List<InstrumentMargin>,
-    @SerializedName("required_margin")
+
+    @JsonProperty("required_margin")
     val requiredMargin: Double,
-    @SerializedName("final_margin")
+
+    @JsonProperty("final_margin")
     val finalMargin: Double
 )
 
@@ -110,18 +136,24 @@ data class MarginResponse(
  * @property tenderMargin Tender margin as futures approach expiration
  */
 data class InstrumentMargin(
-    @SerializedName("span_margin")
+    @JsonProperty("span_margin")
     val spanMargin: Double,
-    @SerializedName("exposure_margin")
+
+    @JsonProperty("exposure_margin")
     val exposureMargin: Double,
-    @SerializedName("equity_margin")
+
+    @JsonProperty("equity_margin")
     val equityMargin: Double,
-    @SerializedName("net_buy_premium")
+
+    @JsonProperty("net_buy_premium")
     val netBuyPremium: Double,
-    @SerializedName("additional_margin")
+
+    @JsonProperty("additional_margin")
     val additionalMargin: Double,
-    @SerializedName("total_margin")
+
+    @JsonProperty("total_margin")
     val totalMargin: Double,
-    @SerializedName("tender_margin")
+
+    @JsonProperty("tender_margin")
     val tenderMargin: Double? = null
 )

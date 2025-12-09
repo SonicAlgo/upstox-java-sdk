@@ -1,71 +1,33 @@
 package io.github.sonicalgo.upstox.config
 
-import io.github.sonicalgo.upstox.Upstox
+import io.github.sonicalgo.core.config.HttpSdkConfig
 
 /**
- * Internal configuration storage for the Upstox SDK.
+ * Configuration for an Upstox SDK instance.
  *
- * Public API is exposed via [Upstox].
+ * Created via [io.github.sonicalgo.upstox.Upstox.Builder] and holds all configuration
+ * for a single SDK instance.
+ *
+ * @property accessToken OAuth access token (mutable for token refresh)
+ * @property sandboxToken Sandbox token for testing order operations
+ * @property sandboxEnabled Whether sandbox mode is enabled
+ * @property loggingEnabled Enable HTTP request/response logging
+ * @property rateLimitRetries Number of retries on rate limit (0-5)
+ * @property connectTimeoutMs Connection timeout in milliseconds
+ * @property readTimeoutMs Read timeout in milliseconds
+ * @property writeTimeoutMs Write timeout in milliseconds
  */
-internal object UpstoxConfig {
-
-    // ==================== Authentication ====================
-
-    /** OAuth access token. */
-    @Volatile
-    var accessToken: String = ""
-
-    /** Sandbox token for testing order operations. */
-    @Volatile
-    var sandboxToken: String = ""
-
-    /** Whether sandbox mode is enabled. */
-    @Volatile
-    var sandboxEnabled: Boolean = false
-
-    // ==================== HTTP Configuration ====================
-
-    /** Rate limit retry attempts (0-5). */
-    @Volatile
-    var rateLimitRetries: Int = 0
-        set(value) {
-            require(value in 0..5) { "rateLimitRetries must be between 0 and 5" }
-            field = value
-        }
-
-    /** HTTP logging enabled flag. */
-    @Volatile
-    var loggingEnabled: Boolean = false
-        set(value) {
-            field = value
-            OkHttpClientFactory.rebuildClientIfNeeded()
-        }
-
-    /** Max WebSocket reconnection attempts (1-20). */
-    @Volatile
-    var maxWebSocketReconnectAttempts: Int = UpstoxConstants.WEBSOCKET_DEFAULT_MAX_RECONNECT_ATTEMPTS
-        set(value) {
-            require(value in 1..20) { "maxWebSocketReconnectAttempts must be between 1 and 20" }
-            field = value
-        }
-
-    /** Whether WebSocket auto-reconnect is enabled globally. */
-    @Volatile
-    var webSocketAutoReconnectEnabled: Boolean = true
-
-    /** Resets all configuration to defaults. */
-    fun resetToDefaults() {
-        // Authentication
-        accessToken = ""
-        sandboxToken = ""
-        sandboxEnabled = false
-
-        // HTTP configuration
-        rateLimitRetries = 0
-        loggingEnabled = false
-
-        // WebSocket configuration
-        maxWebSocketReconnectAttempts = UpstoxConstants.WEBSOCKET_DEFAULT_MAX_RECONNECT_ATTEMPTS
-        webSocketAutoReconnectEnabled = true
+class UpstoxConfig internal constructor(
+    @Volatile var accessToken: String = "",
+    @Volatile var sandboxToken: String = "",
+    @Volatile var sandboxEnabled: Boolean = false,
+    override val loggingEnabled: Boolean = false,
+    override val rateLimitRetries: Int = 0,
+    override val connectTimeoutMs: Long = UpstoxConstants.CONNECT_TIMEOUT_MS,
+    override val readTimeoutMs: Long = UpstoxConstants.READ_TIMEOUT_MS,
+    override val writeTimeoutMs: Long = UpstoxConstants.WRITE_TIMEOUT_MS
+) : HttpSdkConfig {
+    init {
+        require(rateLimitRetries in 0..5) { "rateLimitRetries must be between 0 and 5" }
     }
 }

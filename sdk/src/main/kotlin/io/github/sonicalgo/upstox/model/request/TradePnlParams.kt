@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.request
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.github.sonicalgo.upstox.model.enums.TradeSegment
 
 /**
@@ -13,7 +13,7 @@ import io.github.sonicalgo.upstox.model.enums.TradeSegment
  * val pnlApi = upstox.getTradePnlApi()
  *
  * val params = TradePnlMetadataParams(
- *     segment = TradeSegment.EQ,
+ *     segment = TradeSegment.EQUITY,
  *     financialYear = "2324",
  *     fromDate = "01-04-2023",
  *     toDate = "31-03-2024"
@@ -21,19 +21,23 @@ import io.github.sonicalgo.upstox.model.enums.TradeSegment
  * val metadata = pnlApi.getReportMetadata(params)
  * ```
  *
- * @property segment Market segment: EQ, FO, COM, or CD
+ * @property segment Market segment: EQUITY, FUTURES_OPTIONS, COMMODITY, or CURRENCY_DERIVATIVES
  * @property financialYear Financial year in "YYNN" format (e.g., "2324" for 2023-2024)
  * @property fromDate Start date in dd-mm-yyyy format (within the financial year)
  * @property toDate End date in dd-mm-yyyy format (within the financial year)
  * @see <a href="https://upstox.com/developer/api-documentation/get-report-meta-data">Get Report Metadata API</a>
  */
 data class TradePnlMetadataParams(
+    @JsonProperty("segment")
     val segment: TradeSegment,
-    @SerializedName("financial_year")
+
+    @JsonProperty("financial_year")
     val financialYear: String,
-    @SerializedName("from_date")
+
+    @JsonProperty("from_date")
     val fromDate: String? = null,
-    @SerializedName("to_date")
+
+    @JsonProperty("to_date")
     val toDate: String? = null
 )
 
@@ -47,7 +51,7 @@ data class TradePnlMetadataParams(
  * val pnlApi = upstox.getTradePnlApi()
  *
  * val params = TradePnlReportParams(
- *     segment = TradeSegment.EQ,
+ *     segment = TradeSegment.EQUITY,
  *     financialYear = "2324",
  *     pageNumber = 1,
  *     pageSize = 100,
@@ -57,7 +61,7 @@ data class TradePnlMetadataParams(
  * val report = pnlApi.getProfitAndLossReport(params)
  * ```
  *
- * @property segment Market segment: EQ, FO, COM, or CD
+ * @property segment Market segment: EQUITY, FUTURES_OPTIONS, COMMODITY, or CURRENCY_DERIVATIVES
  * @property financialYear Financial year in "YYNN" format
  * @property pageNumber Page number (1-indexed)
  * @property pageSize Results per page (maximum 5000)
@@ -66,16 +70,22 @@ data class TradePnlMetadataParams(
  * @see <a href="https://upstox.com/developer/api-documentation/get-profit-and-loss-report">Get P&L Report API</a>
  */
 data class TradePnlReportParams(
+    @JsonProperty("segment")
     val segment: TradeSegment,
-    @SerializedName("financial_year")
+
+    @JsonProperty("financial_year")
     val financialYear: String,
-    @SerializedName("page_number")
+
+    @JsonProperty("page_number")
     val pageNumber: Int,
-    @SerializedName("page_size")
+
+    @JsonProperty("page_size")
     val pageSize: Int,
-    @SerializedName("from_date")
+
+    @JsonProperty("from_date")
     val fromDate: String? = null,
-    @SerializedName("to_date")
+
+    @JsonProperty("to_date")
     val toDate: String? = null
 )
 
@@ -89,7 +99,7 @@ data class TradePnlReportParams(
  * val pnlApi = upstox.getTradePnlApi()
  *
  * val params = TradeChargesParams(
- *     segment = TradeSegment.EQ,
+ *     segment = TradeSegment.EQUITY,
  *     financialYear = "2324",
  *     fromDate = "01-04-2023",
  *     toDate = "31-03-2024"
@@ -97,19 +107,23 @@ data class TradePnlReportParams(
  * val charges = pnlApi.getTradeCharges(params)
  * ```
  *
- * @property segment Market segment: EQ, FO, COM, or CD
+ * @property segment Market segment: EQUITY, FUTURES_OPTIONS, COMMODITY, or CURRENCY_DERIVATIVES
  * @property financialYear Financial year in "YYNN" format
  * @property fromDate Start date in dd-mm-yyyy format
  * @property toDate End date in dd-mm-yyyy format
  * @see <a href="https://upstox.com/developer/api-documentation/get-trade-charges">Get Trade Charges API</a>
  */
 data class TradeChargesParams(
+    @JsonProperty("segment")
     val segment: TradeSegment,
-    @SerializedName("financial_year")
+
+    @JsonProperty("financial_year")
     val financialYear: String,
-    @SerializedName("from_date")
+
+    @JsonProperty("from_date")
     val fromDate: String? = null,
-    @SerializedName("to_date")
+
+    @JsonProperty("to_date")
     val toDate: String? = null
 )
 
@@ -127,7 +141,7 @@ data class TradeChargesParams(
  *     endDate = "2023-03-31",
  *     pageNumber = 1,
  *     pageSize = 100,
- *     segment = TradeSegment.EQ
+ *     segment = TradeSegment.EQUITY
  * )
  * val trades = ordersApi.getHistoricalTrades(params)
  * ```
@@ -140,13 +154,18 @@ data class TradeChargesParams(
  * @see <a href="https://upstox.com/developer/api-documentation/get-historical-trades">Get Historical Trades API</a>
  */
 data class HistoricalTradesParams(
-    @SerializedName("start_date")
+    @JsonProperty("start_date")
     val startDate: String,
-    @SerializedName("end_date")
+
+    @JsonProperty("end_date")
     val endDate: String,
-    @SerializedName("page_number")
+
+    @JsonProperty("page_number")
     val pageNumber: Int,
-    @SerializedName("page_size")
+
+    @JsonProperty("page_size")
     val pageSize: Int,
+
+    @JsonProperty("segment")
     val segment: TradeSegment? = null
 )

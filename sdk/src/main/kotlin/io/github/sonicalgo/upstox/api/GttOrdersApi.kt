@@ -1,7 +1,7 @@
 package io.github.sonicalgo.upstox.api
 
 import io.github.sonicalgo.upstox.config.ApiClient
-import io.github.sonicalgo.upstox.config.UpstoxConstants
+import io.github.sonicalgo.upstox.config.UpstoxConstants.BASE_URL_V3
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
 import io.github.sonicalgo.upstox.model.common.UpstoxResponse
 import io.github.sonicalgo.upstox.model.common.UpstoxResponseWithMetadata
@@ -19,13 +19,13 @@ import io.github.sonicalgo.upstox.model.response.GttOrderResponse
  *
  * Example usage:
  * ```kotlin
- * val upstox = Upstox.getInstance()
+ * val gttApi = upstox.getGttOrdersApi()
  *
  * // Place a single GTT order
- * val response = upstox.getGttOrdersApi().placeGttOrder(PlaceGttOrderParams(
+ * val response = gttApi.placeGttOrder(PlaceGttOrderParams(
  *     type = GttType.SINGLE,
  *     quantity = 1,
- *     product = Product.D,
+ *     product = Product.DELIVERY,
  *     instrumentToken = "NSE_EQ|INE669E01016",
  *     transactionType = TransactionType.BUY,
  *     rules = listOf(
@@ -40,7 +40,7 @@ import io.github.sonicalgo.upstox.model.response.GttOrderResponse
  *
  * @see <a href="https://upstox.com/developer/api-documentation/place-gtt-order">Place GTT Order API</a>
  */
-class GttOrdersApi private constructor() {
+class GttOrdersApi internal constructor(private val apiClient: ApiClient) {
 
     /**
      * Places a GTT (Good Till Triggered) order.
@@ -56,7 +56,7 @@ class GttOrdersApi private constructor() {
      * val response = gttApi.placeGttOrder(PlaceGttOrderParams(
      *     type = GttType.SINGLE,
      *     quantity = 1,
-     *     product = Product.D,
+     *     product = Product.DELIVERY,
      *     instrumentToken = "NSE_EQ|INE669E01016",
      *     transactionType = TransactionType.BUY,
      *     rules = listOf(
@@ -75,13 +75,13 @@ class GttOrdersApi private constructor() {
      * val multiResponse = gttApi.placeGttOrder(PlaceGttOrderParams(
      *     type = GttType.MULTIPLE,
      *     quantity = 1,
-     *     product = Product.D,
+     *     product = Product.DELIVERY,
      *     instrumentToken = "NSE_EQ|INE669E01016",
      *     transactionType = TransactionType.BUY,
      *     rules = listOf(
      *         GttRule(GttStrategy.ENTRY, GttTriggerType.ABOVE, 100.0),
      *         GttRule(GttStrategy.TARGET, GttTriggerType.IMMEDIATE, 110.0),
-     *         GttRule(GttStrategy.STOPLOSS, GttTriggerType.IMMEDIATE, 95.0, trailingGap = 2.0)
+     *         GttRule(GttStrategy.STOP_LOSS, GttTriggerType.IMMEDIATE, 95.0, trailingGap = 2.0)
      *     )
      * ))
      * ```
@@ -93,11 +93,10 @@ class GttOrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/place-gtt-order">Place GTT Order API</a>
      */
     fun placeGttOrder(params: PlaceGttOrderParams): UpstoxResponseWithMetadata<GttOrderResponse> {
-        val response: UpstoxResponse<GttOrderResponse> = ApiClient.post(
+        val response: UpstoxResponse<GttOrderResponse> = apiClient.post(
             endpoint = Endpoints.PLACE_GTT_ORDER,
             body = params,
-            baseUrl = UpstoxConstants.BASE_URL_V3,
-            unwrap = false
+            overrideBaseUrl = BASE_URL_V3
         )
         return UpstoxResponseWithMetadata(status = response.status, data = response.data)
     }
@@ -133,11 +132,10 @@ class GttOrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/modify-gtt-order">Modify GTT Order API</a>
      */
     fun modifyGttOrder(params: ModifyGttOrderParams): UpstoxResponseWithMetadata<GttOrderResponse> {
-        val response: UpstoxResponse<GttOrderResponse> = ApiClient.put(
+        val response: UpstoxResponse<GttOrderResponse> = apiClient.put(
             endpoint = Endpoints.MODIFY_GTT_ORDER,
             body = params,
-            baseUrl = UpstoxConstants.BASE_URL_V3,
-            unwrap = false
+            overrideBaseUrl = BASE_URL_V3
         )
         return UpstoxResponseWithMetadata(status = response.status, data = response.data)
     }
@@ -162,11 +160,10 @@ class GttOrdersApi private constructor() {
      * @see <a href="https://upstox.com/developer/api-documentation/cancel-gtt-order">Cancel GTT Order API</a>
      */
     fun cancelGttOrder(params: CancelGttOrderParams): UpstoxResponseWithMetadata<GttOrderResponse> {
-        val response: UpstoxResponse<GttOrderResponse> = ApiClient.delete(
+        val response: UpstoxResponse<GttOrderResponse> = apiClient.delete(
             endpoint = Endpoints.CANCEL_GTT_ORDER,
             body = params,
-            baseUrl = UpstoxConstants.BASE_URL_V3,
-            unwrap = false
+            overrideBaseUrl = BASE_URL_V3
         )
         return UpstoxResponseWithMetadata(status = response.status, data = response.data)
     }
@@ -205,11 +202,12 @@ class GttOrdersApi private constructor() {
         val queryParams = mutableMapOf<String, String?>()
         gttOrderId?.let { queryParams["gtt_order_id"] = it }
 
-        return ApiClient.get(
+        val response: UpstoxResponse<List<GttOrder>> = apiClient.get(
             endpoint = Endpoints.GET_GTT_ORDER_DETAILS,
             queryParams = queryParams,
-            baseUrl = UpstoxConstants.BASE_URL_V3
+            overrideBaseUrl = BASE_URL_V3
         )
+        return response.dataOrThrow()
     }
 
     internal object Endpoints {
@@ -217,9 +215,5 @@ class GttOrdersApi private constructor() {
         const val MODIFY_GTT_ORDER = "/order/gtt/modify"
         const val CANCEL_GTT_ORDER = "/order/gtt/cancel"
         const val GET_GTT_ORDER_DETAILS = "/order/gtt"
-    }
-
-    companion object {
-        internal val instance by lazy { GttOrdersApi() }
     }
 }

@@ -11,13 +11,13 @@ Unofficial Kotlin/Java SDK for the [Upstox](https://upstox.com) trading platform
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("io.github.sonicalgo:upstox-java-sdk:1.1.0")
+implementation("io.github.sonicalgo:upstox-java-sdk:1.2.0")
 ```
 
 ### Gradle (Groovy)
 
 ```groovy
-implementation 'io.github.sonicalgo:upstox-java-sdk:1.1.0'
+implementation 'io.github.sonicalgo:upstox-java-sdk:1.2.0'
 ```
 
 ### Maven
@@ -26,13 +26,49 @@ implementation 'io.github.sonicalgo:upstox-java-sdk:1.1.0'
 <dependency>
     <groupId>io.github.sonicalgo</groupId>
     <artifactId>upstox-java-sdk</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
 ## Quick Start
 
 <details open>
+<summary>Kotlin</summary>
+
+```kotlin
+import io.github.sonicalgo.upstox.Upstox
+import io.github.sonicalgo.upstox.model.request.*
+import io.github.sonicalgo.upstox.model.response.*
+
+// Create SDK instance with access token
+val upstox = Upstox.builder()
+    .accessToken("your-access-token")
+    .build()
+
+// Get user profile
+val profile = upstox.getUserApi().getProfile()
+println("Welcome, ${profile.userName}")
+
+// Get market quote
+val quotes = upstox.getMarketQuoteApi().getLtp(listOf("NSE_EQ|INE669E01016"))
+println("LTP: ${quotes["NSE_EQ|INE669E01016"]?.ltp}")
+
+// Place an order
+val response = upstox.getOrdersApi().placeOrder(PlaceOrderParams(
+    instrumentToken = "NSE_EQ|INE669E01016",
+    quantity = 1,
+    product = Product.DELIVERY,
+    validity = Validity.DAY,
+    price = 100.0,
+    orderType = OrderType.LIMIT,
+    transactionType = TransactionType.BUY
+))
+println("Order ID: ${response.data?.orderIds?.first()}")
+```
+
+</details>
+
+<details>
 <summary>Java</summary>
 
 ```java
@@ -41,9 +77,10 @@ import io.github.sonicalgo.upstox.model.request.*;
 import io.github.sonicalgo.upstox.model.response.*;
 import java.util.Arrays;
 
-// Get SDK instance and set access token
-Upstox upstox = Upstox.getInstance();
-upstox.setAccessToken("your-access-token");
+// Create SDK instance with access token
+Upstox upstox = Upstox.builder()
+    .accessToken("your-access-token")
+    .build();
 
 // Get user profile
 UserProfile profile = upstox.getUserApi().getProfile();
@@ -59,7 +96,7 @@ System.out.println("LTP: " + quotes.get("NSE_EQ|INE669E01016").getLtp());
 var response = upstox.getOrdersApi().placeOrder(new PlaceOrderParams(
     "NSE_EQ|INE669E01016",  // instrumentToken
     1,                      // quantity
-    Product.D,              // product (D=Delivery)
+    Product.DELIVERY,       // product
     Validity.DAY,           // validity
     100.0,                  // price
     OrderType.LIMIT,        // orderType
@@ -74,46 +111,52 @@ System.out.println("Order ID: " + response.getData().getOrderIds().get(0));
 
 </details>
 
-<details>
-<summary>Kotlin</summary>
+> **Note:** All code examples below assume you have initialized the SDK as shown below:
+> ```kotlin
+> val upstox = Upstox.builder()
+>     .accessToken("your-access-token")
+>     .build()
+> ```
+
+## Type-Safe Enums
+
+The SDK uses type-safe enums throughout the API responses for better code safety and IDE support:
 
 ```kotlin
-import io.github.sonicalgo.upstox.Upstox
-import io.github.sonicalgo.upstox.model.request.*
-import io.github.sonicalgo.upstox.model.response.*
+// Order response uses enums
+val order = upstox.getOrdersApi().getOrderDetails("order-id")
+when (order.status) {
+    OrderStatus.COMPLETE -> println("Order filled")
+    OrderStatus.REJECTED -> println("Order rejected: ${order.statusMessage}")
+    OrderStatus.OPEN -> println("Order pending")
+    else -> println("Status: ${order.status}")
+}
 
-// Get SDK instance and set access token
-val upstox = Upstox.getInstance()
-upstox.setAccessToken("your-access-token")
-
-// Get user profile
+// User profile returns enum lists
 val profile = upstox.getUserApi().getProfile()
-println("Welcome, ${profile.userName}")
+profile.exchanges.forEach { exchange: Exchange ->
+    println("Enabled exchange: $exchange")
+}
+profile.orderTypes.forEach { orderType: OrderType ->
+    println("Enabled order type: $orderType")
+}
 
-// Get market quote
-val quotes = upstox.getMarketQuoteApi().getLtp(listOf("NSE_EQ|INE669E01016"))
-println("LTP: ${quotes["NSE_EQ|INE669E01016"]?.ltp}")
-
-// Place an order
-val response = upstox.getOrdersApi().placeOrder(PlaceOrderParams(
-    instrumentToken = "NSE_EQ|INE669E01016",
-    quantity = 1,
-    product = Product.D,
-    validity = Validity.DAY,
-    price = 100.0,
-    orderType = OrderType.LIMIT,
-    transactionType = TransactionType.BUY
-))
-println("Order ID: ${response.data?.orderIds?.first()}")
+// Position and holdings use enums
+val positions = upstox.getPortfolioApi().getPositions()
+positions.filter { it.exchange == Exchange.NSE && it.product == Product.INTRADAY }
+    .forEach { println("Intraday position: ${it.tradingSymbol}") }
 ```
 
-</details>
+**Available enums:**
 
-> **Note:** All code examples below assume you have initialized the SDK as shown above:
-> ```kotlin
-> val upstox = Upstox.getInstance()
-> upstox.setAccessToken("your-access-token")
-> ```
+| Category | Enums |
+|----------|-------|
+| Trading | `Exchange`, `Segment`, `Product`, `OrderType`, `TransactionType`, `Validity` |
+| Order Status | `OrderStatus`, `OrderVariety` |
+| GTT Orders | `GttType`, `GttStrategy`, `GttTriggerType`, `GttRuleStatus` |
+| Market Data | `OhlcInterval`, `CandleUnit`, `MarketStatus`, `HolidayType` |
+| Options | `OptionType`, `InstrumentType`, `UnderlyingType` |
+| Reports | `TradeSegment`, `TradeType`, `FundSegment` |
 
 ## Why This SDK?
 
@@ -121,11 +164,11 @@ println("Order ID: ${response.data?.orderIds?.first()}")
 - **WebSocket Ready** - Full protobuf parsing built-in with typed callbacks; no manual binary handling needed
 - **HFT Optimized** - Uses dedicated HFT endpoints (`api-hft.upstox.com`) for lowest latency order execution
 - **Auto-Reconnection** - WebSocket clients automatically reconnect with exponential backoff
-- **Simple API** - Clean singleton design: `Upstox.getInstance().getOrdersApi().placeOrder()` instead of complex client setup
+- **Simple API** - Clean builder pattern: `Upstox.builder().accessToken("token").build()` with fluent configuration
 - **Type-Safe** - Kotlin data classes with proper types; no raw Maps or Object casting
 - **Rich Error Handling** - Exceptions with helpers like `isRateLimitError`, `isAuthenticationError`
 - **Latest API Support** - V3 endpoints supported out of the box
-- **Sandbox Built-In** - Test orders safely with `upstox.setSandboxMode(true, token)`
+- **Sandbox Built-In** - Test orders safely with `Upstox.builder().sandboxMode(true, "token").build()`
 - **Thread-Safe** - Designed for concurrent usage in trading applications
 
 ## Features
@@ -139,8 +182,80 @@ println("Order ID: ${response.data?.orderIds?.first()}")
 - **Debug logging** - Optional HTTP request/response logging for troubleshooting
 - **Full Kotlin & Java compatibility** - Use from either language
 
+---
+
+## Configuration
+
+### SDK Configuration
+
+```kotlin
+// Configure during initialization using builder pattern
+val upstox = Upstox.builder()
+    .accessToken("your-access-token")
+    .loggingEnabled(true)       // Enable HTTP request/response logging
+    .rateLimitRetries(3)        // Configure rate limit retry (0-5 attempts)
+    .build()
+```
+
+| Setting | Builder Method | Default | Range | Description |
+|---------|----------------|---------|-------|-------------|
+| HTTP Logging | `loggingEnabled(Boolean)` | `false` | - | Log HTTP requests/responses for debugging |
+| Rate Limit Retry | `rateLimitRetries(Int)` | `0` | 0-5 | Auto-retry on HTTP 429 with exponential backoff |
+
+> **Note:** When `rateLimitRetries > 0`, the SDK automatically retries rate-limited requests (HTTP 429) with exponential backoff (1s, 2s, 4s, ...) before throwing an exception.
+
+### WebSocket Configuration
+
+WebSocket reconnection settings are configured per-client during creation:
+
+```kotlin
+// Market Data Feed Client
+val feedClient = upstox.createMarketDataFeedClient(
+    maxReconnectAttempts = 10,      // Default: 5, Max reconnection attempts
+    autoReconnectEnabled = true,    // Default: true, Auto-reconnect on disconnect
+    autoResubscribeEnabled = true   // Default: true, Auto-resubscribe after reconnect
+)
+
+// Portfolio Stream Client
+val portfolioClient = upstox.createPortfolioStreamClient(
+    maxReconnectAttempts = 10,   // Default: 5
+    autoReconnectEnabled = true  // Default: true
+)
+```
+
+### Timeouts
+
+| Setting | Default |
+|---------|---------|
+| Connect timeout | 10 seconds |
+| Read timeout | 30 seconds |
+| Write timeout | 30 seconds |
+
+### WebSocket Settings
+
+| Setting | Default |
+|---------|---------|
+| Ping interval | 10 seconds |
+| Initial reconnect delay | 1 second |
+| Max reconnect delay | 30 seconds |
+| Max reconnect attempts | 5 (configurable) |
+
+### Base URLs
+
+| Endpoint | URL |
+|----------|-----|
+| REST API v2 | `https://api.upstox.com/v2` |
+| REST API v3 | `https://api.upstox.com/v3` |
+| HFT (fast orders) | `https://api-hft.upstox.com/v3` |
+| Sandbox | `https://api-sandbox.upstox.com/v3` |
+| Auth | `https://api.upstox.com` |
+
 ## Table of Contents
 
+- [Configuration](#configuration)
+- [WebSocket Streaming](#websocket-streaming)
+  - [Market Data Feed](#market-data-feed)
+  - [Portfolio Stream](#portfolio-stream)
 - [Authentication](#authentication)
 - [REST API Reference](#rest-api-reference)
   - [User & Funds](#user--funds)
@@ -155,12 +270,8 @@ println("Order ID: ${response.data?.orderIds?.first()}")
   - [Trade P&L](#trade-pnl)
   - [Instruments](#instruments)
   - [Expired Instruments](#expired-instruments)
-- [WebSocket Streaming](#websocket-streaming)
-  - [Market Data Feed](#market-data-feed)
-  - [Portfolio Stream](#portfolio-stream)
 - [Sandbox Mode](#sandbox-mode)
 - [Error Handling](#error-handling)
-- [Configuration](#configuration)
 - [Requirements](#requirements)
 - [License](#license)
 
@@ -177,9 +288,12 @@ println("Order ID: ${response.data?.orderIds?.first()}")
 ### OAuth Flow
 
 ```kotlin
+// Step 1: Create SDK instance (no token required for auth flow)
+val upstox = Upstox.builder().build()
+
 val loginApi = upstox.getLoginApi()
 
-// Step 1: Get authorization URL
+// Step 2: Get authorization URL
 val authUrl = loginApi.getAuthorizationUrl(AuthorizeParams(
     clientId = "your-api-key",
     redirectUri = "https://yourapp.com/callback",
@@ -187,7 +301,7 @@ val authUrl = loginApi.getAuthorizationUrl(AuthorizeParams(
 ))
 // Redirect user to authUrl
 
-// Step 2: Exchange authorization code for access token
+// Step 3: Exchange authorization code for access token (in callback handler)
 val tokenResponse = loginApi.getToken(GetTokenParams(
     code = "authorization-code-from-callback",
     clientId = "your-api-key",
@@ -195,7 +309,7 @@ val tokenResponse = loginApi.getToken(GetTokenParams(
     redirectUri = "https://yourapp.com/callback"
 ))
 
-// Step 3: Set the access token
+// Step 4: Set the access token on the existing instance
 upstox.setAccessToken(tokenResponse.accessToken)
 
 // Token is valid for the trading day (until ~3:30 AM next day)
@@ -205,6 +319,7 @@ upstox.setAccessToken(tokenResponse.accessToken)
 
 ```kotlin
 upstox.getLoginApi().logout()
+// Access token is automatically cleared after successful logout
 ```
 
 ---
@@ -224,8 +339,8 @@ val profile = userApi.getProfile()
 val funds = userApi.getFundsAndMargin()
 
 // Get funds for specific segment
-val equityFunds = userApi.getFundsAndMargin(FundSegment.SEC)  // Equity
-val commodityFunds = userApi.getFundsAndMargin(FundSegment.COM)  // Commodity
+val equityFunds = userApi.getFundsAndMargin(FundSegment.SECURITIES)  // Equity
+val commodityFunds = userApi.getFundsAndMargin(FundSegment.COMMODITY)  // Commodity
 ```
 
 ### Orders
@@ -236,7 +351,7 @@ val commodityFunds = userApi.getFundsAndMargin(FundSegment.COM)  // Commodity
 val response = upstox.getOrdersApi().placeOrder(PlaceOrderParams(
     instrumentToken = "NSE_EQ|INE669E01016",
     quantity = 1,
-    product = Product.D,           // D=Delivery, I=Intraday, M=MTF
+    product = Product.DELIVERY,    // DELIVERY, INTRADAY, MTF
     validity = Validity.DAY,       // DAY or IOC
     price = 100.0,
     orderType = OrderType.LIMIT,   // LIMIT or MARKET
@@ -257,7 +372,7 @@ val responses = upstox.getOrdersApi().placeMultiOrder(listOf(
     MultiOrderParams(
         instrumentToken = "NSE_EQ|INE669E01016",
         quantity = 1,
-        product = Product.D,
+        product = Product.DELIVERY,
         validity = Validity.DAY,
         price = 100.0,
         orderType = OrderType.LIMIT,
@@ -267,7 +382,7 @@ val responses = upstox.getOrdersApi().placeMultiOrder(listOf(
     MultiOrderParams(
         instrumentToken = "NSE_EQ|INE002A01018",
         quantity = 1,
-        product = Product.I,
+        product = Product.INTRADAY,
         validity = Validity.DAY,
         price = 2500.0,
         orderType = OrderType.LIMIT,
@@ -342,7 +457,7 @@ val historicalTrades = ordersApi.getHistoricalTrades(HistoricalTradesParams(
     endDate = "2024-03-31",
     pageNumber = 1,
     pageSize = 100,
-    segment = TradeSegment.EQ
+    segment = TradeSegment.EQUITY
 ))
 ```
 
@@ -359,7 +474,7 @@ val gttApi = upstox.getGttOrdersApi()
 val gtt = gttApi.placeGttOrder(PlaceGttOrderParams(
     type = GttType.SINGLE,
     quantity = 1,
-    product = Product.D,
+    product = Product.DELIVERY,
     instrumentToken = "NSE_EQ|INE669E01016",
     transactionType = TransactionType.BUY,
     rules = listOf(
@@ -375,13 +490,13 @@ val gtt = gttApi.placeGttOrder(PlaceGttOrderParams(
 val gttOco = gttApi.placeGttOrder(PlaceGttOrderParams(
     type = GttType.MULTIPLE,
     quantity = 1,
-    product = Product.D,
+    product = Product.DELIVERY,
     instrumentToken = "NSE_EQ|INE669E01016",
     transactionType = TransactionType.SELL,
     rules = listOf(
         GttRule(GttStrategy.ENTRY, GttTriggerType.ABOVE, 100.0),
         GttRule(GttStrategy.TARGET, GttTriggerType.IMMEDIATE, 110.0),
-        GttRule(GttStrategy.STOPLOSS, GttTriggerType.IMMEDIATE, 95.0, trailingGap = 2.0)
+        GttRule(GttStrategy.STOP_LOSS, GttTriggerType.IMMEDIATE, 95.0, trailingGap = 2.0)
     )
 ))
 ```
@@ -438,8 +553,8 @@ val mtfPositions = portfolioApi.getMtfPositions()
 // Convert position (e.g., intraday to delivery)
 val converted = portfolioApi.convertPosition(ConvertPositionParams(
     instrumentToken = "NSE_EQ|INE528G01035",
-    newProduct = Product.D,
-    oldProduct = Product.I,
+    newProduct = Product.DELIVERY,
+    oldProduct = Product.INTRADAY,
     transactionType = TransactionType.BUY,
     quantity = 1
 ))
@@ -515,6 +630,7 @@ for (candle in candles) {
 ```
 
 **Data availability:**
+
 | Unit | Available From | Max Range |
 |------|----------------|-----------|
 | Minutes (1-15) | Jan 2022 | 1 month |
@@ -588,7 +704,7 @@ val status = marketInfoApi.getMarketStatus("NSE")
 val charges = upstox.getChargesApi().getBrokerage(BrokerageParams(
     instrumentToken = "NSE_EQ|INE669E01016",
     quantity = 10,
-    product = Product.D,
+    product = Product.DELIVERY,
     transactionType = TransactionType.BUY,
     price = 100.0
 ))
@@ -605,7 +721,7 @@ val margin = upstox.getMarginsApi().getMargin(MarginParams(
             instrumentKey = "NSE_FO|NIFTY24JANFUT",
             quantity = 50,
             transactionType = TransactionType.BUY,
-            product = Product.I
+            product = Product.INTRADAY
         )
     )
 ))
@@ -619,7 +735,7 @@ val pnlApi = upstox.getTradePnlApi()
 
 // Get report metadata
 val metadata = pnlApi.getReportMetadata(TradePnlMetadataParams(
-    segment = TradeSegment.EQ,
+    segment = TradeSegment.EQUITY,
     financialYear = "2324",
     fromDate = "01-04-2023",
     toDate = "31-03-2024"
@@ -627,7 +743,7 @@ val metadata = pnlApi.getReportMetadata(TradePnlMetadataParams(
 
 // Get P&L report (paginated)
 val report = pnlApi.getProfitAndLossReport(TradePnlReportParams(
-    segment = TradeSegment.EQ,
+    segment = TradeSegment.EQUITY,
     financialYear = "2324",
     pageNumber = 1,
     pageSize = 100,
@@ -637,7 +753,7 @@ val report = pnlApi.getProfitAndLossReport(TradePnlReportParams(
 
 // Get trade charges breakdown
 val charges = pnlApi.getTradeCharges(TradeChargesParams(
-    segment = TradeSegment.EQ,
+    segment = TradeSegment.EQUITY,
     financialYear = "2324",
     fromDate = "01-04-2023",
     toDate = "31-03-2024"
@@ -710,15 +826,26 @@ val candles = expiredApi.getExpiredHistoricalCandle(
 Real-time market data via WebSocket with protobuf encoding (low latency).
 
 ```kotlin
-val feedClient = upstox.createMarketDataFeedClient()
+// Create client with custom reconnection settings (optional)
+val feedClient = upstox.createMarketDataFeedClient(
+    maxReconnectAttempts = 10,      // Default: 5
+    autoReconnectEnabled = true,    // Default: true
+    autoResubscribeEnabled = true   // Default: true, auto-resubscribe after reconnect
+)
 
-feedClient.connect(object : MarketDataListener {
-    override fun onConnected() {
-        // Subscribe with LTPC mode (minimal bandwidth)
-        feedClient.subscribe(listOf("NSE_EQ|INE669E01016"))
+// Add listener
+feedClient.addListener(object : MarketDataListener {
+    override fun onConnected(isReconnect: Boolean) {
+        if (isReconnect) {
+            println("Reconnected! Subscriptions restored.")
+        } else {
+            println("Connected!")
+            // Subscribe with LTPC mode (minimal bandwidth)
+            feedClient.subscribe(listOf("NSE_EQ|INE669E01016"))
 
-        // Or subscribe with full market data
-        feedClient.subscribe(listOf("NSE_INDEX|Nifty 50"), FeedMode.FULL)
+            // Or subscribe with full market data
+            feedClient.subscribe(listOf("NSE_INDEX|Nifty 50"), FeedMode.FULL)
+        }
     }
 
     override fun onLtpcUpdate(instrumentKey: String, tick: LtpcTick) {
@@ -739,15 +866,11 @@ feedClient.connect(object : MarketDataListener {
     }
 
     override fun onMarketStatus(status: MarketStatusEvent) {
-        println("Market status: ${status.status}")
+        println("Market status: ${status.segmentStatus}")
     }
 
     override fun onReconnecting(attempt: Int, delayMs: Long) {
         println("Reconnecting (attempt $attempt) in ${delayMs}ms...")
-    }
-
-    override fun onReconnected() {
-        println("Reconnected! Subscriptions restored.")
     }
 
     override fun onDisconnected(code: Int, reason: String) {
@@ -758,6 +881,9 @@ feedClient.connect(object : MarketDataListener {
         println("Error: ${error.message}")
     }
 })
+
+// Connect to WebSocket
+feedClient.connect()
 ```
 
 #### Feed Modes
@@ -796,35 +922,53 @@ feedClient.close()
 Real-time updates for orders, positions, holdings, and GTT orders.
 
 ```kotlin
-val portfolioClient = upstox.createPortfolioStreamClient()
+// Create client with custom reconnection settings (optional)
+val portfolioClient = upstox.createPortfolioStreamClient(
+    maxReconnectAttempts = 10,   // Default: 5
+    autoReconnectEnabled = true  // Default: true
+)
 
-portfolioClient.connect(
-    listener = object : PortfolioStreamListener {
-        override fun onConnected() {
+// Add listener
+portfolioClient.addListener(object : PortfolioStreamListener {
+    override fun onConnected(isReconnect: Boolean) {
+        if (isReconnect) {
+            println("Reconnected to portfolio stream")
+        } else {
             println("Connected to portfolio stream")
         }
+    }
 
-        override fun onOrderUpdate(order: OrderUpdate) {
-            println("Order ${order.orderId}: ${order.status}")
-        }
+    override fun onOrderUpdate(order: OrderUpdate) {
+        println("Order ${order.orderId}: ${order.status}")
+    }
 
-        override fun onPositionUpdate(position: PositionUpdate) {
-            println("Position ${position.tradingSymbol}: Qty=${position.quantity}")
-        }
+    override fun onPositionUpdate(position: PositionUpdate) {
+        println("Position ${position.tradingSymbol}: Qty=${position.quantity}")
+    }
 
-        override fun onHoldingUpdate(holding: HoldingUpdate) {
-            println("Holding ${holding.tradingSymbol}: Qty=${holding.quantity}")
-        }
+    override fun onHoldingUpdate(holding: HoldingUpdate) {
+        println("Holding ${holding.tradingSymbol}: Qty=${holding.quantity}")
+    }
 
-        override fun onGttOrderUpdate(gttOrder: GttOrderUpdate) {
-            println("GTT ${gttOrder.gttOrderId}: ${gttOrder.status}")
-        }
+    override fun onGttOrderUpdate(gttOrder: GttOrderUpdate) {
+        println("GTT ${gttOrder.gttOrderId}: ${gttOrder.status}")
+    }
 
-        override fun onReconnecting(attempt: Int, delayMs: Long) {}
-        override fun onReconnected() {}
-        override fun onDisconnected(code: Int, reason: String) {}
-        override fun onError(error: Throwable) {}
-    },
+    override fun onReconnecting(attempt: Int, delayMs: Long) {
+        println("Reconnecting (attempt $attempt) in ${delayMs}ms...")
+    }
+
+    override fun onDisconnected(code: Int, reason: String) {
+        println("Disconnected: $reason")
+    }
+
+    override fun onError(error: Throwable) {
+        println("Error: ${error.message}")
+    }
+})
+
+// Connect with update types
+portfolioClient.connect(
     updateTypes = setOf(
         PortfolioUpdateType.ORDER,
         PortfolioUpdateType.POSITION,
@@ -846,24 +990,24 @@ Test order operations without executing live trades. When enabled, sandbox mode:
 - Switches order endpoints to the **sandbox API** (`https://api-sandbox.upstox.com/v3`)
 
 ```kotlin
-// Enable sandbox mode
-upstox.setSandboxMode(enabled = true, token = "your-sandbox-token")
+// Create SDK instance with sandbox mode enabled
+val upstox = Upstox.builder()
+    .accessToken("your-access-token")
+    .sandboxMode(enabled = true, token = "your-sandbox-token")
+    .build()
 
 // Orders will be simulated (use ordersApi from earlier)
 val ordersApi = upstox.getOrdersApi()
 val response = ordersApi.placeOrder(PlaceOrderParams(
     instrumentToken = "NSE_EQ|INE669E01016",
     quantity = 1,
-    product = Product.D,
+    product = Product.DELIVERY,
     validity = Validity.DAY,
     price = 100.0,
     orderType = OrderType.LIMIT,
     transactionType = TransactionType.BUY
 ))
 // Order is simulated via sandbox endpoint, not sent to exchange
-
-// Disable sandbox mode for live trading
-upstox.setSandboxMode(enabled = false)
 ```
 
 **Sandbox-enabled endpoints:**
@@ -884,18 +1028,14 @@ try {
     val order = ordersApi.placeOrder(...)
 } catch (e: UpstoxApiException) {
     println("HTTP Status: ${e.httpStatusCode}")
-    println("Error Code: ${e.errorCode}")
     println("Message: ${e.message}")
-    println("Errors: ${e.errors}")  // For multi-order operations
 
-    // Helper properties
+    // Helper methods
     when {
         e.isRateLimitError -> println("Rate limited (429)")
-        e.isAuthenticationError -> println("Auth failed (401)")
+        e.isAuthenticationError -> println("Auth failed (401/403)")
         e.isValidationError -> println("Bad request (400)")
         e.isServerError -> println("Server error (5xx)")
-        e.isNotFoundError -> println("Not found (404)")
-        e.isServiceUnavailableError -> println("Service unavailable (503)")
     }
 }
 ```
@@ -904,84 +1044,20 @@ try {
 
 | Exception | Description |
 |-----------|-------------|
-| `UpstoxApiException` | Base exception for all API errors |
-| `UpstoxPlusRequiredException` | Feature requires Upstox Plus subscription |
-| `ServiceUnavailableException` | API available only during specific hours |
-
----
-
-## Configuration
-
-### SDK Configuration
-
-```kotlin
-val upstox = Upstox.getInstance()
-
-// Enable HTTP request/response logging (for debugging)
-upstox.setLoggingEnabled(true)  // Default: false
-
-// Configure rate limit retry (0-5 attempts with exponential backoff)
-upstox.setRateLimitRetries(3)  // Default: 0 (disabled)
-
-// Configure WebSocket reconnection attempts
-upstox.setMaxWebSocketReconnectAttempts(10)  // Default: 5
-
-// Enable/disable WebSocket auto-reconnection
-upstox.setWebSocketAutoReconnectEnabled(true)  // Default: true
-
-// Reset all configuration to defaults (clears tokens too)
-upstox.resetConfiguration()
-```
-
-| Setting | Method | Default | Range | Description |
-|---------|--------|---------|-------|-------------|
-| HTTP Logging | `setLoggingEnabled(Boolean)` | `false` | - | Log HTTP requests/responses for debugging |
-| Rate Limit Retry | `setRateLimitRetries(Int)` | `0` | 0-5 | Auto-retry on HTTP 429 with exponential backoff |
-| WebSocket Reconnect | `setMaxWebSocketReconnectAttempts(Int)` | `5` | 1-20 | Max reconnection attempts before giving up |
-| WebSocket Auto-Reconnect | `setWebSocketAutoReconnectEnabled(Boolean)` | `true` | - | Auto-reconnect on WebSocket disconnection |
-| Reset Config | `resetConfiguration()` | - | - | Reset all settings to defaults (clears tokens) |
-
-> **Note:** When `rateLimitRetries > 0`, the SDK automatically retries rate-limited requests (HTTP 429) with exponential backoff (1s, 2s, 4s, ...) before throwing an exception.
-
-### Timeouts
-
-| Setting | Default |
-|---------|---------|
-| Connect timeout | 10 seconds |
-| Read timeout | 30 seconds |
-| Write timeout | 30 seconds |
-
-### WebSocket Settings
-
-| Setting | Default |
-|---------|---------|
-| Ping interval | 10 seconds |
-| Initial reconnect delay | 1 second |
-| Max reconnect delay | 30 seconds |
-| Max reconnect attempts | 5 (configurable) |
-
-### Base URLs
-
-| Endpoint | URL |
-|----------|-----|
-| REST API v2 | `https://api.upstox.com/v2` |
-| REST API v3 | `https://api.upstox.com/v3` |
-| HFT (fast orders) | `https://api-hft.upstox.com/v3` |
-| Sandbox | `https://api-sandbox.upstox.com/v3` |
-| Auth | `https://api.upstox.com` |
+| `UpstoxApiException` | Exception for all HTTP API errors |
 
 ---
 
 ## Requirements
 
 - **Java 11** or higher
-- **Kotlin 1.8** or higher (if using Kotlin)
+- **Kotlin 2.0** or higher (if using Kotlin)
 - Upstox trading account with API access
 
 ### Dependencies
 
 - OkHttp 5.3.0
-- Gson 2.13.2
+- Jackson 2.20.1
 - Protobuf 4.33.1
 
 ---

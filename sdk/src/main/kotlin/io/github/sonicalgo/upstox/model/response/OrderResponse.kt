@@ -1,6 +1,7 @@
 package io.github.sonicalgo.upstox.model.response
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.github.sonicalgo.upstox.model.enums.*
 
 /**
  * Response from Place Order API.
@@ -9,7 +10,7 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/v3/place-order">Place Order V3 API</a>
  */
 data class PlaceOrderResponse(
-    @SerializedName("order_ids")
+    @JsonProperty("order_ids")
     val orderIds: List<String>
 )
 
@@ -20,7 +21,7 @@ data class PlaceOrderResponse(
  * @see <a href="https://upstox.com/developer/api-documentation/v3/modify-order">Modify Order V3 API</a>
  */
 data class ModifyOrderResponse(
-    @SerializedName("order_id")
+    @JsonProperty("order_id")
     val orderId: String
 )
 
@@ -31,7 +32,7 @@ data class ModifyOrderResponse(
  * @see <a href="https://upstox.com/developer/api-documentation/v3/cancel-order">Cancel Order V3 API</a>
  */
 data class CancelOrderResponse(
-    @SerializedName("order_id")
+    @JsonProperty("order_id")
     val orderId: String
 )
 
@@ -42,9 +43,10 @@ data class CancelOrderResponse(
  * @property orderId Generated order ID for successful orders
  */
 data class MultiOrderPlaceResponse(
-    @SerializedName("correlation_id")
+    @JsonProperty("correlation_id")
     val correlationId: String,
-    @SerializedName("order_id")
+
+    @JsonProperty("order_id")
     val orderId: String? = null
 )
 
@@ -54,7 +56,7 @@ data class MultiOrderPlaceResponse(
  * @property orderIds List of successfully cancelled order IDs
  */
 data class MultiOrderCancelResponse(
-    @SerializedName("order_ids")
+    @JsonProperty("order_ids")
     val orderIds: List<String>
 )
 
@@ -64,7 +66,7 @@ data class MultiOrderCancelResponse(
  * @property orderIds List of order IDs created for exiting positions
  */
 data class ExitPositionsResponse(
-    @SerializedName("order_ids")
+    @JsonProperty("order_ids")
     val orderIds: List<String>
 )
 
@@ -74,7 +76,7 @@ data class ExitPositionsResponse(
  * Contains all information about an order including status and execution details.
  *
  * @property exchange Exchange identifier (NSE, BSE, etc.)
- * @property product Product type: I, D, CO, MTF
+ * @property product Product type: INTRADAY, DELIVERY, COVER_ORDER, MTF
  * @property price Order placement price
  * @property quantity Order quantity
  * @property status Current order status
@@ -82,7 +84,7 @@ data class ExitPositionsResponse(
  * @property instrumentToken Instrument key identifier
  * @property placedBy User identifier who placed the order
  * @property tradingSymbol Trading symbol of the instrument
- * @property orderType Order type: MARKET, LIMIT, SL, SL-M
+ * @property orderType Order type: MARKET, LIMIT, SL, SL_M
  * @property validity Order validity: DAY or IOC
  * @property triggerPrice Trigger price for stop loss orders
  * @property disclosedQuantity Quantity disclosed in market depth
@@ -104,53 +106,88 @@ data class ExitPositionsResponse(
  * @see <a href="https://upstox.com/developer/api-documentation/get-order-details">Get Order Details API</a>
  */
 data class Order(
-    val exchange: String,
-    val product: String,
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("product")
+    val product: Product,
+
+    @JsonProperty("price")
     val price: Double,
+
+    @JsonProperty("quantity")
     val quantity: Int,
-    val status: String,
+
+    @JsonProperty("status")
+    val status: OrderStatus,
+
+    @JsonProperty("tag")
     val tag: String? = null,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
-    @SerializedName("placed_by")
+
+    @JsonProperty("placed_by")
     val placedBy: String? = null,
-    @SerializedName("trading_symbol")
+
+    @JsonProperty("trading_symbol")
     val tradingSymbol: String,
-    @SerializedName("order_type")
-    val orderType: String,
-    val validity: String,
-    @SerializedName("trigger_price")
+
+    @JsonProperty("order_type")
+    val orderType: OrderType,
+
+    @JsonProperty("validity")
+    val validity: Validity,
+
+    @JsonProperty("trigger_price")
     val triggerPrice: Double,
-    @SerializedName("disclosed_quantity")
+
+    @JsonProperty("disclosed_quantity")
     val disclosedQuantity: Int,
-    @SerializedName("transaction_type")
-    val transactionType: String,
-    @SerializedName("average_price")
+
+    @JsonProperty("transaction_type")
+    val transactionType: TransactionType,
+
+    @JsonProperty("average_price")
     val averagePrice: Double,
-    @SerializedName("filled_quantity")
+
+    @JsonProperty("filled_quantity")
     val filledQuantity: Int,
-    @SerializedName("pending_quantity")
+
+    @JsonProperty("pending_quantity")
     val pendingQuantity: Int,
-    @SerializedName("status_message")
+
+    @JsonProperty("status_message")
     val statusMessage: String? = null,
-    @SerializedName("status_message_raw")
+
+    @JsonProperty("status_message_raw")
     val statusMessageRaw: String? = null,
-    @SerializedName("exchange_order_id")
+
+    @JsonProperty("exchange_order_id")
     val exchangeOrderId: String? = null,
-    @SerializedName("parent_order_id")
+
+    @JsonProperty("parent_order_id")
     val parentOrderId: String? = null,
-    @SerializedName("order_id")
+
+    @JsonProperty("order_id")
     val orderId: String,
-    val variety: String,
-    @SerializedName("order_timestamp")
+
+    @JsonProperty("variety")
+    val variety: OrderVariety,
+
+    @JsonProperty("order_timestamp")
     val orderTimestamp: String? = null,
-    @SerializedName("exchange_timestamp")
+
+    @JsonProperty("exchange_timestamp")
     val exchangeTimestamp: String? = null,
-    @SerializedName("is_amo")
+
+    @JsonProperty("is_amo")
     val isAmo: Boolean,
-    @SerializedName("order_request_id")
+
+    @JsonProperty("order_request_id")
     val orderRequestId: String? = null,
-    @SerializedName("order_ref_id")
+
+    @JsonProperty("order_ref_id")
     val orderRefId: String? = null
 )
 
@@ -160,10 +197,10 @@ data class Order(
  * Contains information about executed trades.
  *
  * @property exchange Exchange identifier
- * @property product Product type: I, D, CO, MTF
+ * @property product Product type: INTRADAY, DELIVERY, COVER_ORDER, MTF
  * @property tradingSymbol Trading symbol
  * @property instrumentToken Instrument key identifier
- * @property orderType Order type: MARKET, LIMIT, SL, SL-M
+ * @property orderType Order type: MARKET, LIMIT, SL, SL_M
  * @property transactionType Transaction type: BUY or SELL
  * @property quantity Total quantity traded
  * @property exchangeOrderId Exchange-assigned order ID
@@ -176,30 +213,46 @@ data class Order(
  * @see <a href="https://upstox.com/developer/api-documentation/get-trade-history">Get Trades API</a>
  */
 data class Trade(
-    val exchange: String,
-    val product: String,
-    @SerializedName("trading_symbol")
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("product")
+    val product: Product,
+
+    @JsonProperty("trading_symbol")
     val tradingSymbol: String,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String,
-    @SerializedName("order_type")
-    val orderType: String,
-    @SerializedName("transaction_type")
-    val transactionType: String,
+
+    @JsonProperty("order_type")
+    val orderType: OrderType,
+
+    @JsonProperty("transaction_type")
+    val transactionType: TransactionType,
+
+    @JsonProperty("quantity")
     val quantity: Int,
-    @SerializedName("exchange_order_id")
+
+    @JsonProperty("exchange_order_id")
     val exchangeOrderId: String,
-    @SerializedName("order_id")
+
+    @JsonProperty("order_id")
     val orderId: String,
-    @SerializedName("exchange_timestamp")
+
+    @JsonProperty("exchange_timestamp")
     val exchangeTimestamp: String,
-    @SerializedName("average_price")
+
+    @JsonProperty("average_price")
     val averagePrice: Double,
-    @SerializedName("trade_id")
+
+    @JsonProperty("trade_id")
     val tradeId: String,
-    @SerializedName("order_ref_id")
+
+    @JsonProperty("order_ref_id")
     val orderRefId: String? = null,
-    @SerializedName("order_timestamp")
+
+    @JsonProperty("order_timestamp")
     val orderTimestamp: String? = null
 )
 
@@ -209,8 +262,8 @@ data class Trade(
  * Contains historical trade information for reporting.
  *
  * @property exchange Exchange identifier
- * @property segment Market segment: EQ, FO, CD, COM, MF
- * @property optionType Option type: CE or PE (FO/CD segments only)
+ * @property segment Market segment: EQUITY, FUTURES_OPTIONS, CURRENCY_DERIVATIVES, COMMODITY, MUTUAL_FUNDS
+ * @property optionType Option type: CALL_OPTION or PUT_OPTION (FO/CD segments only)
  * @property quantity Order quantity
  * @property amount Total transaction amount
  * @property tradeId Exchange-generated trade identifier
@@ -226,26 +279,48 @@ data class Trade(
  * @see <a href="https://upstox.com/developer/api-documentation/get-historical-trades">Get Historical Trades API</a>
  */
 data class HistoricalTrade(
-    val exchange: String,
-    val segment: String,
-    @SerializedName("option_type")
-    val optionType: String? = null,
+    @JsonProperty("exchange")
+    val exchange: Exchange,
+
+    @JsonProperty("segment")
+    val segment: TradeSegment,
+
+    @JsonProperty("option_type")
+    val optionType: OptionType? = null,
+
+    @JsonProperty("quantity")
     val quantity: Int,
+
+    @JsonProperty("amount")
     val amount: Double,
-    @SerializedName("trade_id")
+
+    @JsonProperty("trade_id")
     val tradeId: String,
-    @SerializedName("trade_date")
+
+    @JsonProperty("trade_date")
     val tradeDate: String,
-    @SerializedName("transaction_type")
-    val transactionType: String,
-    @SerializedName("scrip_name")
+
+    @JsonProperty("transaction_type")
+    val transactionType: TransactionType,
+
+    @JsonProperty("scrip_name")
     val scripName: String,
-    @SerializedName("strike_price")
+
+    @JsonProperty("strike_price")
     val strikePrice: String? = null,
+
+    @JsonProperty("expiry")
     val expiry: String? = null,
+
+    @JsonProperty("price")
     val price: Double,
+
+    @JsonProperty("isin")
     val isin: String? = null,
+
+    @JsonProperty("symbol")
     val symbol: String? = null,
-    @SerializedName("instrument_token")
+
+    @JsonProperty("instrument_token")
     val instrumentToken: String? = null
 )

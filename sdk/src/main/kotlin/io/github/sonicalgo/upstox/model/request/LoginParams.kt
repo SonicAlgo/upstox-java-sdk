@@ -1,6 +1,6 @@
 package io.github.sonicalgo.upstox.model.request
 
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
  * Parameters for the OAuth authorization URL.
@@ -28,14 +28,17 @@ import com.google.gson.annotations.SerializedName
  * @see <a href="https://upstox.com/developer/api-documentation/authorize">Authorize API</a>
  */
 data class AuthorizeParams(
-    @SerializedName("client_id")
+    @JsonProperty("client_id")
     val clientId: String,
-    @SerializedName("redirect_uri")
+
+    @JsonProperty("redirect_uri")
     val redirectUri: String,
+
+    @JsonProperty("state")
     val state: String? = null
 ) {
     /** Response type - always "code" for authorization code flow. */
-    @SerializedName("response_type")
+    @JsonProperty("response_type")
     val responseType: String = "code"
 }
 
@@ -66,14 +69,19 @@ data class AuthorizeParams(
  * @see <a href="https://upstox.com/developer/api-documentation/get-token">Get Token API</a>
  */
 data class GetTokenParams(
+    @JsonProperty("code")
     val code: String,
-    @SerializedName("client_id")
+
+    @JsonProperty("client_id")
     val clientId: String,
-    @SerializedName("client_secret")
+
+    @JsonProperty("client_secret")
     val clientSecret: String,
-    @SerializedName("redirect_uri")
+
+    @JsonProperty("redirect_uri")
     val redirectUri: String,
-    @SerializedName("grant_type")
+
+    @JsonProperty("grant_type")
     val grantType: String = "authorization_code"
 )
 
@@ -96,6 +104,6 @@ data class GetTokenParams(
  * @see <a href="https://upstox.com/developer/api-documentation/access-token-request">Access Token Request API</a>
  */
 data class AccessTokenRequestParams(
-    @SerializedName("client_secret")
+    @JsonProperty("client_secret")
     val clientSecret: String
 )
