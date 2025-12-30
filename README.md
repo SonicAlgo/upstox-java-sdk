@@ -11,13 +11,13 @@ Unofficial Kotlin/Java SDK for the [Upstox](https://upstox.com) trading platform
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("io.github.sonicalgo:upstox-java-sdk:1.2.1")
+implementation("io.github.sonicalgo:upstox-java-sdk:2.0.0")
 ```
 
 ### Gradle (Groovy)
 
 ```groovy
-implementation 'io.github.sonicalgo:upstox-java-sdk:1.2.1'
+implementation 'io.github.sonicalgo:upstox-java-sdk:2.0.0'
 ```
 
 ### Maven
@@ -26,7 +26,7 @@ implementation 'io.github.sonicalgo:upstox-java-sdk:1.2.1'
 <dependency>
     <groupId>io.github.sonicalgo</groupId>
     <artifactId>upstox-java-sdk</artifactId>
-    <version>1.2.1</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
@@ -37,8 +37,8 @@ implementation 'io.github.sonicalgo:upstox-java-sdk:1.2.1'
 
 ```kotlin
 import io.github.sonicalgo.upstox.Upstox
-import io.github.sonicalgo.upstox.model.request.*
-import io.github.sonicalgo.upstox.model.response.*
+import io.github.sonicalgo.upstox.usecase.*
+import io.github.sonicalgo.upstox.common.*
 
 // Create SDK instance with access token
 val upstox = Upstox.builder()
@@ -46,24 +46,24 @@ val upstox = Upstox.builder()
     .build()
 
 // Get user profile
-val profile = upstox.getUserApi().getProfile()
+val profile = upstox.getProfile()
 println("Welcome, ${profile.userName}")
 
 // Get market quote
-val quotes = upstox.getMarketQuoteApi().getLtp(listOf("NSE_EQ|INE669E01016"))
+val quotes = upstox.getLtp(listOf("NSE_EQ|INE669E01016"))
 println("LTP: ${quotes["NSE_EQ|INE669E01016"]?.ltp}")
 
 // Place an order
-val response = upstox.getOrdersApi().placeOrder(PlaceOrderParams(
-    instrumentToken = "NSE_EQ|INE669E01016",
-    quantity = 1,
-    product = Product.DELIVERY,
-    validity = Validity.DAY,
-    price = 100.0,
-    orderType = OrderType.LIMIT,
+val response = upstox.placeOrder(PlaceOrderParams {
+    instrumentToken = "NSE_EQ|INE669E01016"
+    quantity = 1
+    product = Product.DELIVERY
+    validity = Validity.DAY
+    price = 100.0
+    orderType = OrderType.LIMIT
     transactionType = TransactionType.BUY
-))
-println("Order ID: ${response.data?.orderIds?.first()}")
+})
+println("Order ID: ${response.orderIds?.firstOrNull()}")
 ```
 
 </details>
@@ -73,8 +73,8 @@ println("Order ID: ${response.data?.orderIds?.first()}")
 
 ```java
 import io.github.sonicalgo.upstox.Upstox;
-import io.github.sonicalgo.upstox.model.request.*;
-import io.github.sonicalgo.upstox.model.response.*;
+import io.github.sonicalgo.upstox.usecase.*;
+import io.github.sonicalgo.upstox.common.*;
 import java.util.Arrays;
 
 // Create SDK instance with access token
@@ -83,30 +83,24 @@ Upstox upstox = Upstox.builder()
     .build();
 
 // Get user profile
-UserProfile profile = upstox.getUserApi().getProfile();
+var profile = upstox.getProfile();
 System.out.println("Welcome, " + profile.getUserName());
 
 // Get market quote
-Map<String, LtpQuote> quotes = upstox.getMarketQuoteApi().getLtp(
-    Arrays.asList("NSE_EQ|INE669E01016")
-);
+var quotes = upstox.getLtp(Arrays.asList("NSE_EQ|INE669E01016"));
 System.out.println("LTP: " + quotes.get("NSE_EQ|INE669E01016").getLtp());
 
-// Place an order
-var response = upstox.getOrdersApi().placeOrder(new PlaceOrderParams(
-    "NSE_EQ|INE669E01016",  // instrumentToken
-    1,                      // quantity
-    Product.DELIVERY,       // product
-    Validity.DAY,           // validity
-    100.0,                  // price
-    OrderType.LIMIT,        // orderType
-    TransactionType.BUY,    // transactionType
-    0,                      // disclosedQuantity
-    0.0,                    // triggerPrice
-    false,                  // isAmo
-    null                    // tag
-));
-System.out.println("Order ID: " + response.getData().getOrderIds().get(0));
+// Place an order using builder pattern
+var response = upstox.placeOrder(PlaceOrderParams.builder()
+    .instrumentToken("NSE_EQ|INE669E01016")
+    .quantity(1)
+    .product(Product.DELIVERY)
+    .validity(Validity.DAY)
+    .price(100.0)
+    .orderType(OrderType.LIMIT)
+    .transactionType(TransactionType.BUY)
+    .build());
+System.out.println("Order ID: " + response.getOrderIds().get(0));
 ```
 
 </details>
@@ -124,7 +118,7 @@ The SDK uses type-safe enums throughout the API responses for better code safety
 
 ```kotlin
 // Order response uses enums
-val order = upstox.getOrdersApi().getOrderDetails("order-id")
+val order = upstox.getOrderDetails("order-id")
 when (order.status) {
     OrderStatus.COMPLETE -> println("Order filled")
     OrderStatus.REJECTED -> println("Order rejected: ${order.statusMessage}")
@@ -133,7 +127,7 @@ when (order.status) {
 }
 
 // User profile returns enum lists
-val profile = upstox.getUserApi().getProfile()
+val profile = upstox.getProfile()
 profile.exchanges.forEach { exchange: Exchange ->
     println("Enabled exchange: $exchange")
 }
@@ -142,7 +136,7 @@ profile.orderTypes.forEach { orderType: OrderType ->
 }
 
 // Position and holdings use enums
-val positions = upstox.getPortfolioApi().getPositions()
+val positions = upstox.getPositions()
 positions.filter { it.exchange == Exchange.NSE && it.product == Product.INTRADAY }
     .forEach { println("Intraday position: ${it.tradingSymbol}") }
 ```
@@ -164,7 +158,7 @@ positions.filter { it.exchange == Exchange.NSE && it.product == Product.INTRADAY
 - **WebSocket Ready** - Full protobuf parsing built-in with typed callbacks; no manual binary handling needed
 - **HFT Optimized** - Uses dedicated HFT endpoints (`api-hft.upstox.com`) for lowest latency order execution
 - **Auto-Reconnection** - WebSocket clients automatically reconnect with exponential backoff
-- **Simple API** - Clean builder pattern: `Upstox.builder().accessToken("token").build()` with fluent configuration
+- **Flat API** - Clean direct methods: `upstox.placeOrder()`, `upstox.getProfile()` with no nested accessors
 - **Type-Safe** - Kotlin data classes with proper types; no raw Maps or Object casting
 - **Rich Error Handling** - Exceptions with helpers like `isRateLimitError`, `isAuthenticationError`
 - **Latest API Support** - V3 endpoints supported out of the box
@@ -173,7 +167,7 @@ positions.filter { it.exchange == Exchange.NSE && it.product == Product.INTRADAY
 
 ## Features
 
-- **15 REST API modules** - Orders, Portfolio, Market Quotes, Historical Data, Option Chain, and more
+- **45+ direct API methods** - Orders, Portfolio, Market Quotes, Historical Data, Option Chain, and more
 - **Real-time market data** - WebSocket streaming with protobuf (low latency)
 - **Real-time portfolio updates** - Order, position, holding, and GTT updates via WebSocket
 - **Sandbox mode** - Test order operations without live execution
@@ -181,6 +175,80 @@ positions.filter { it.exchange == Exchange.NSE && it.product == Product.INTRADAY
 - **Configurable rate limiting** - Automatic retry with exponential backoff for HTTP 429
 - **Debug logging** - Optional HTTP request/response logging for troubleshooting
 - **Full Kotlin & Java compatibility** - Use from either language
+
+---
+
+## API Reference
+
+| Method | Description |
+|--------|-------------|
+| **Authentication** | |
+| `getAuthorizationUrl()` | Get OAuth authorization URL |
+| `getToken()` | Exchange auth code for access token |
+| `requestAccessToken()` | Request new access token |
+| `logout()` | End session and invalidate token |
+| **User** | |
+| `getProfile()` | Get user profile |
+| `getFundsAndMargin()` | Get funds and margin details |
+| **Orders** | |
+| `placeOrder()` | Place a single order |
+| `placeMultiOrder()` | Place up to 25 orders |
+| `modifyOrder()` | Modify an existing order |
+| `cancelOrder()` | Cancel an order |
+| `cancelMultiOrder()` | Cancel multiple orders |
+| `exitAllPositions()` | Exit all open positions |
+| `getOrders()` | Get all orders for the day |
+| `getOrderDetails()` | Get specific order details |
+| `getOrderHistory()` | Get order history/audit trail |
+| `getTrades()` | Get all trades for the day |
+| `getTradesByOrder()` | Get trades for specific order |
+| `getHistoricalTrades()` | Get historical trades |
+| **GTT Orders** | |
+| `placeGttOrder()` | Place GTT order |
+| `modifyGttOrder()` | Modify GTT order |
+| `cancelGttOrder()` | Cancel GTT order |
+| `getGttOrders()` | Get all/specific GTT orders |
+| **Portfolio** | |
+| `getPositions()` | Get current positions |
+| `getMtfPositions()` | Get MTF positions |
+| `convertPosition()` | Convert position product type |
+| `getHoldings()` | Get holdings |
+| **Market Quotes** | |
+| `getLtp()` | Get last traded price |
+| `getOhlc()` | Get OHLC data |
+| `getFullQuote()` | Get full market quote with depth |
+| `getOptionGreeks()` | Get option greeks |
+| **Historical Data** | |
+| `getHistoricalCandles()` | Get historical candle data |
+| `getIntradayCandles()` | Get intraday candle data |
+| **Option Chain** | |
+| `getOptionContracts()` | Get option contracts |
+| `getOptionChain()` | Get option chain with greeks |
+| **Market Info** | |
+| `getMarketHolidays()` | Get market holidays |
+| `getMarketHoliday()` | Get specific holiday |
+| `getMarketTimings()` | Get market timings |
+| `getMarketStatus()` | Get current market status |
+| **Charges & Margins** | |
+| `getBrokerage()` | Calculate brokerage charges |
+| `getMargin()` | Calculate margin requirements |
+| **Trade P&L** | |
+| `getTradePnlMetadata()` | Get P&L report metadata |
+| `getTradePnlReport()` | Get P&L report |
+| `getTradeCharges()` | Get trade charges breakdown |
+| **Instruments** | |
+| `getInstruments()` | Download instrument master |
+| `getAllInstruments()` | Download all instruments |
+| `getNseInstruments()` | Download NSE instruments |
+| `getBseInstruments()` | Download BSE instruments |
+| **Expired Instruments** | |
+| `getExpiries()` | Get available expiries |
+| `getExpiredOptionContracts()` | Get expired option contracts |
+| `getExpiredFutureContracts()` | Get expired future contracts |
+| `getExpiredHistoricalCandles()` | Get expired instrument candles |
+| **WebSocket** | |
+| `createMarketDataFeedClient()` | Create market data WebSocket |
+| `createPortfolioStreamClient()` | Create portfolio WebSocket |
 
 ---
 
@@ -252,6 +320,7 @@ val portfolioClient = upstox.createPortfolioStreamClient(
 
 ## Table of Contents
 
+- [API Reference](#api-reference)
 - [Configuration](#configuration)
 - [WebSocket Streaming](#websocket-streaming)
   - [Market Data Feed](#market-data-feed)
@@ -272,6 +341,7 @@ val portfolioClient = upstox.createPortfolioStreamClient(
   - [Expired Instruments](#expired-instruments)
 - [Sandbox Mode](#sandbox-mode)
 - [Error Handling](#error-handling)
+- [Instrument Key Format](#instrument-key-format)
 - [Requirements](#requirements)
 - [License](#license)
 
@@ -287,27 +357,26 @@ val portfolioClient = upstox.createPortfolioStreamClient(
 
 ### OAuth Flow
 
+**Kotlin:**
 ```kotlin
 // Step 1: Create SDK instance (no token required for auth flow)
 val upstox = Upstox.builder().build()
 
-val loginApi = upstox.getLoginApi()
-
 // Step 2: Get authorization URL
-val authUrl = loginApi.getAuthorizationUrl(AuthorizeParams(
+val authUrl = upstox.getAuthorizationUrl(
     clientId = "your-api-key",
     redirectUri = "https://yourapp.com/callback",
     state = "optional-state"  // For CSRF protection
-))
+)
 // Redirect user to authUrl
 
 // Step 3: Exchange authorization code for access token (in callback handler)
-val tokenResponse = loginApi.getToken(GetTokenParams(
+val tokenResponse = upstox.getToken(
     code = "authorization-code-from-callback",
     clientId = "your-api-key",
     clientSecret = "your-api-secret",
     redirectUri = "https://yourapp.com/callback"
-))
+)
 
 // Step 4: Set the access token on the existing instance
 upstox.setAccessToken(tokenResponse.accessToken)
@@ -315,10 +384,35 @@ upstox.setAccessToken(tokenResponse.accessToken)
 // Token is valid for the trading day (until ~3:30 AM next day)
 ```
 
+**Java:**
+```java
+// Step 1: Create SDK instance (no token required for auth flow)
+Upstox upstox = Upstox.builder().build();
+
+// Step 2: Get authorization URL
+String authUrl = upstox.getAuthorizationUrl(
+    "your-api-key",
+    "https://yourapp.com/callback",
+    "optional-state"  // For CSRF protection
+);
+// Redirect user to authUrl
+
+// Step 3: Exchange authorization code for access token (in callback handler)
+TokenResponse tokenResponse = upstox.getToken(
+    "authorization-code-from-callback",
+    "your-api-key",
+    "your-api-secret",
+    "https://yourapp.com/callback"
+);
+
+// Step 4: Set the access token on the existing instance
+upstox.setAccessToken(tokenResponse.getAccessToken());
+```
+
 ### Logout
 
 ```kotlin
-upstox.getLoginApi().logout()
+upstox.logout()
 // Access token is automatically cleared after successful logout
 ```
 
@@ -329,136 +423,244 @@ upstox.getLoginApi().logout()
 ### User & Funds
 
 ```kotlin
-val userApi = upstox.getUserApi()
-
 // Get user profile
-val profile = userApi.getProfile()
+val profile = upstox.getProfile()
 // Returns: userId, userName, email, exchanges, products, orderTypes, isActive
 
 // Get funds and margin (all segments)
-val funds = userApi.getFundsAndMargin()
-
-// Get funds for specific segment
-val equityFunds = userApi.getFundsAndMargin(FundSegment.SECURITIES)  // Equity
-val commodityFunds = userApi.getFundsAndMargin(FundSegment.COMMODITY)  // Commodity
+val funds = upstox.getFundsAndMargin()
 ```
 
 ### Orders
 
 #### Place Order
 
+**Kotlin:**
 ```kotlin
-val response = upstox.getOrdersApi().placeOrder(PlaceOrderParams(
-    instrumentToken = "NSE_EQ|INE669E01016",
-    quantity = 1,
-    product = Product.DELIVERY,    // DELIVERY, INTRADAY, MTF
-    validity = Validity.DAY,       // DAY or IOC
-    price = 100.0,
-    orderType = OrderType.LIMIT,   // LIMIT or MARKET
-    transactionType = TransactionType.BUY,
-    disclosedQuantity = 0,         // Optional
-    triggerPrice = 0.0,            // For SL orders
-    isAmo = false,                 // After Market Order
-    tag = "my-tag"                 // Optional identifier
-))
-println("Order IDs: ${response.data?.orderIds}")
-println("Latency: ${response.metadata?.latency}ms")
+val response = upstox.placeOrder(PlaceOrderParams {
+    instrumentToken = "NSE_EQ|INE669E01016"
+    quantity = 1
+    product = Product.DELIVERY      // DELIVERY, INTRADAY, MTF
+    validity = Validity.DAY         // DAY or IOC
+    price = 100.0
+    orderType = OrderType.LIMIT     // LIMIT or MARKET
+    transactionType = TransactionType.BUY
+    disclosedQuantity = 0           // Optional
+    triggerPrice = 0.0              // For SL orders
+    isAmo = false                   // After Market Order
+    tag = "my-tag"                  // Optional identifier
+})
+println("Order ID: ${response.orderIds?.firstOrNull()}")
+```
+
+**Java:**
+```java
+PlaceOrderParams params = new PlaceOrderParamsBuilder()
+    .instrumentToken("NSE_EQ|INE669E01016")
+    .quantity(1)
+    .product(Product.DELIVERY)
+    .validity(Validity.DAY)
+    .price(100.0)
+    .orderType(OrderType.LIMIT)
+    .transactionType(TransactionType.BUY)
+    .disclosedQuantity(0)
+    .triggerPrice(0.0)
+    .isAmo(false)
+    .tag("my-tag")
+    .build();
+
+PlaceOrderResponse response = upstox.placeOrder(params);
+System.out.println("Order ID: " + response.getOrderIds().get(0));
 ```
 
 #### Place Multiple Orders (up to 25)
 
+**Kotlin:**
 ```kotlin
-val responses = upstox.getOrdersApi().placeMultiOrder(listOf(
-    MultiOrderParams(
-        instrumentToken = "NSE_EQ|INE669E01016",
-        quantity = 1,
-        product = Product.DELIVERY,
-        validity = Validity.DAY,
-        price = 100.0,
-        orderType = OrderType.LIMIT,
-        transactionType = TransactionType.BUY,
+val responses = upstox.placeMultiOrder(listOf(
+    MultiOrderParams {
+        instrumentToken = "NSE_EQ|INE669E01016"
+        quantity = 1
+        product = Product.DELIVERY
+        validity = Validity.DAY
+        price = 100.0
+        orderType = OrderType.LIMIT
+        transactionType = TransactionType.BUY
         correlationId = "order-1"
-    ),
-    MultiOrderParams(
-        instrumentToken = "NSE_EQ|INE002A01018",
-        quantity = 1,
-        product = Product.INTRADAY,
-        validity = Validity.DAY,
-        price = 2500.0,
-        orderType = OrderType.LIMIT,
-        transactionType = TransactionType.SELL,
+    },
+    MultiOrderParams {
+        instrumentToken = "NSE_EQ|INE002A01018"
+        quantity = 1
+        product = Product.INTRADAY
+        validity = Validity.DAY
+        price = 2500.0
+        orderType = OrderType.LIMIT
+        transactionType = TransactionType.SELL
         correlationId = "order-2"
-    )
+    }
 ))
+```
+
+**Java:**
+```java
+List<MultiOrderParams> orders = Arrays.asList(
+    new MultiOrderParamsBuilder()
+        .instrumentToken("NSE_EQ|INE669E01016")
+        .quantity(1)
+        .product(Product.DELIVERY)
+        .validity(Validity.DAY)
+        .price(100.0)
+        .orderType(OrderType.LIMIT)
+        .transactionType(TransactionType.BUY)
+        .correlationId("order-1")
+        .build(),
+    new MultiOrderParamsBuilder()
+        .instrumentToken("NSE_EQ|INE002A01018")
+        .quantity(1)
+        .product(Product.INTRADAY)
+        .validity(Validity.DAY)
+        .price(2500.0)
+        .orderType(OrderType.LIMIT)
+        .transactionType(TransactionType.SELL)
+        .correlationId("order-2")
+        .build()
+);
+
+List<MultiOrderResponse> responses = upstox.placeMultiOrder(orders);
 ```
 
 #### Modify Order
 
+**Kotlin:**
 ```kotlin
-val modified = upstox.getOrdersApi().modifyOrder(ModifyOrderParams(
-    orderId = "240108010918222",
-    quantity = 2,
-    validity = Validity.DAY,
-    price = 105.0,
-    orderType = OrderType.LIMIT,
-    disclosedQuantity = 0,
+val modified = upstox.modifyOrder(ModifyOrderParams {
+    orderId = "240108010918222"
+    quantity = 2
+    validity = Validity.DAY
+    price = 105.0
+    orderType = OrderType.LIMIT
+    disclosedQuantity = 0
     triggerPrice = 0.0
-))
+})
+```
+
+**Java:**
+```java
+ModifyOrderParams params = new ModifyOrderParamsBuilder()
+    .orderId("240108010918222")
+    .quantity(2)
+    .validity(Validity.DAY)
+    .price(105.0)
+    .orderType(OrderType.LIMIT)
+    .disclosedQuantity(0)
+    .triggerPrice(0.0)
+    .build();
+
+ModifyOrderResponse modified = upstox.modifyOrder(params);
 ```
 
 #### Cancel Order
 
 ```kotlin
-val cancelled = upstox.getOrdersApi().cancelOrder("240108010445130")
+val cancelled = upstox.cancelOrder("240108010445130")
 ```
 
 #### Cancel Multiple Orders
 
+**Kotlin:**
 ```kotlin
-val cancelled = upstox.getOrdersApi().cancelMultiOrder(CancelMultiOrderParams(
+// Cancel by segment
+val cancelled = upstox.cancelMultiOrder(segment = Segment.NSE_EQ)
+
+// Cancel by tag
+val cancelledByTag = upstox.cancelMultiOrder(tag = "my-tag")
+
+// Cancel by both
+val cancelledBoth = upstox.cancelMultiOrder(
     segment = Segment.NSE_EQ,
-    tag = "my-tag"  // Optional: cancel by tag
-))
+    tag = "my-tag"
+)
+```
+
+**Java:**
+```java
+// Cancel by segment
+MultiOrderResponse cancelled = upstox.cancelMultiOrder(Segment.NSE_EQ, null);
+
+// Cancel by tag
+MultiOrderResponse cancelledByTag = upstox.cancelMultiOrder(null, "my-tag");
+
+// Cancel by both
+MultiOrderResponse cancelledBoth = upstox.cancelMultiOrder(Segment.NSE_EQ, "my-tag");
 ```
 
 #### Exit All Positions
 
+**Kotlin:**
 ```kotlin
-val exited = upstox.getOrdersApi().exitAllPositions(ExitAllPositionsParams(
-    segment = Segment.NSE_FO  // Optional: specific segment
-))
+// Exit all positions
+val exited = upstox.exitAllPositions()
+
+// Exit positions with filters
+val exited = upstox.exitAllPositions(
+    segment = Segment.NSE_FO,  // Optional: exit by segment
+    tag = "my-tag"             // Optional: exit by tag (intraday only)
+)
+```
+
+**Java:**
+```java
+// Exit all positions
+MultiOrderResponse exited = upstox.exitAllPositions();
+
+// Exit positions with filters
+MultiOrderResponse exited = upstox.exitAllPositions(Segment.NSE_FO, "my-tag");
 ```
 
 #### Query Orders
 
 ```kotlin
-val ordersApi = upstox.getOrdersApi()
-
 // Get all orders for the day
-val orderBook = ordersApi.getOrderBook()
+val orderBook = upstox.getOrders()
 
 // Get specific order details
-val order = ordersApi.getOrderDetails("240108010445130")
+val order = upstox.getOrderDetails("240108010445130")
 
 // Get order history/audit trail
-val history = ordersApi.getOrderHistory(orderId = "240108010445130")
+val history = upstox.getOrderHistory(orderId = "240108010445130")
 // OR by tag
-val historyByTag = ordersApi.getOrderHistory(tag = "my-tag")
+val historyByTag = upstox.getOrderHistory(tag = "my-tag")
 
 // Get all trades for the day
-val trades = ordersApi.getTrades()
+val trades = upstox.getTrades()
 
 // Get trades for specific order
-val orderTrades = ordersApi.getTradesByOrder("240108010445100")
+val orderTrades = upstox.getTradesByOrder("240108010445100")
 
 // Get historical trades (last 3 financial years)
-val historicalTrades = ordersApi.getHistoricalTrades(HistoricalTradesParams(
-    startDate = "2023-04-01",
-    endDate = "2024-03-31",
-    pageNumber = 1,
-    pageSize = 100,
+val response = upstox.getHistoricalTrades(HistoricalTradesParams {
+    startDate = "2023-04-01"
+    endDate = "2024-03-31"
+    pageNumber = 1
+    pageSize = 100
     segment = TradeSegment.EQUITY
-))
+})
+val trades = response.data  // List of HistoricalTrade
+val totalPages = response.metaData?.page?.totalPages  // Pagination info
+```
+
+**Java (Historical Trades):**
+```java
+HistoricalTradesParams params = new HistoricalTradesParamsBuilder()
+    .startDate("2023-04-01")
+    .endDate("2024-03-31")
+    .pageNumber(1)
+    .pageSize(100)
+    .segment(TradeSegment.EQUITY)
+    .build();
+
+HistoricalTradesResponse response = upstox.getHistoricalTrades(params);
+List<HistoricalTrade> trades = response.getData();
 ```
 
 ### GTT Orders
@@ -467,71 +669,106 @@ Good Till Triggered orders execute automatically when price conditions are met.
 
 #### Place GTT Order
 
+**Kotlin:**
 ```kotlin
-val gttApi = upstox.getGttOrdersApi()
-
 // Single trigger
-val gtt = gttApi.placeGttOrder(PlaceGttOrderParams(
-    type = GttType.SINGLE,
-    quantity = 1,
-    product = Product.DELIVERY,
-    instrumentToken = "NSE_EQ|INE669E01016",
-    transactionType = TransactionType.BUY,
+val gtt = upstox.placeGttOrder(PlaceGttOrderParams {
+    type = GttType.SINGLE
+    quantity = 1
+    product = Product.DELIVERY
+    instrumentToken = "NSE_EQ|INE669E01016"
+    transactionType = TransactionType.BUY
     rules = listOf(
-        GttRule(
-            strategy = GttStrategy.ENTRY,
-            triggerType = GttTriggerType.BELOW,
+        GttRuleParams {
+            strategy = GttStrategy.ENTRY
+            triggerType = GttTriggerType.BELOW
             triggerPrice = 95.0
-        )
+        }
     )
-))
+})
 
 // Multiple triggers with target and stop-loss
-val gttOco = gttApi.placeGttOrder(PlaceGttOrderParams(
-    type = GttType.MULTIPLE,
-    quantity = 1,
-    product = Product.DELIVERY,
-    instrumentToken = "NSE_EQ|INE669E01016",
-    transactionType = TransactionType.SELL,
+val gttOco = upstox.placeGttOrder(PlaceGttOrderParams {
+    type = GttType.MULTIPLE
+    quantity = 1
+    product = Product.DELIVERY
+    instrumentToken = "NSE_EQ|INE669E01016"
+    transactionType = TransactionType.SELL
     rules = listOf(
-        GttRule(GttStrategy.ENTRY, GttTriggerType.ABOVE, 100.0),
-        GttRule(GttStrategy.TARGET, GttTriggerType.IMMEDIATE, 110.0),
-        GttRule(GttStrategy.STOP_LOSS, GttTriggerType.IMMEDIATE, 95.0, trailingGap = 2.0)
+        GttRuleParams { strategy = GttStrategy.ENTRY; triggerType = GttTriggerType.ABOVE; triggerPrice = 100.0 },
+        GttRuleParams { strategy = GttStrategy.TARGET; triggerType = GttTriggerType.IMMEDIATE; triggerPrice = 110.0 },
+        GttRuleParams { strategy = GttStrategy.STOP_LOSS; triggerType = GttTriggerType.IMMEDIATE; triggerPrice = 95.0; trailingGap = 2.0 }
     )
-))
+})
+```
+
+**Java:**
+```java
+// Single trigger
+PlaceGttOrderParams params = new PlaceGttOrderParamsBuilder()
+    .type(GttType.SINGLE)
+    .quantity(1)
+    .product(Product.DELIVERY)
+    .instrumentToken("NSE_EQ|INE669E01016")
+    .transactionType(TransactionType.BUY)
+    .rules(Arrays.asList(
+        new GttRuleParamsBuilder()
+            .strategy(GttStrategy.ENTRY)
+            .triggerType(GttTriggerType.BELOW)
+            .triggerPrice(95.0)
+            .build()
+    ))
+    .build();
+
+GttOrderResponse gtt = upstox.placeGttOrder(params);
 ```
 
 #### Modify GTT Order
 
+**Kotlin:**
 ```kotlin
-val modified = upstox.getGttOrdersApi().modifyGttOrder(ModifyGttOrderParams(
-    gttOrderId = "GTT-C25270200137952",
-    type = GttType.SINGLE,
-    quantity = 2,
+val modified = upstox.modifyGttOrder(ModifyGttOrderParams {
+    gttOrderId = "GTT-C25270200137952"
+    type = GttType.SINGLE
+    quantity = 2
     rules = listOf(
-        GttRule(GttStrategy.ENTRY, GttTriggerType.BELOW, 90.0)
+        GttRuleParams { strategy = GttStrategy.ENTRY; triggerType = GttTriggerType.BELOW; triggerPrice = 90.0 }
     )
-))
+})
+```
+
+**Java:**
+```java
+ModifyGttOrderParams params = new ModifyGttOrderParamsBuilder()
+    .gttOrderId("GTT-C25270200137952")
+    .type(GttType.SINGLE)
+    .quantity(2)
+    .rules(Arrays.asList(
+        new GttRuleParamsBuilder()
+            .strategy(GttStrategy.ENTRY)
+            .triggerType(GttTriggerType.BELOW)
+            .triggerPrice(90.0)
+            .build()
+    ))
+    .build();
+
+GttOrderResponse modified = upstox.modifyGttOrder(params);
 ```
 
 #### Cancel GTT Order
 
 ```kotlin
-val cancelled = upstox.getGttOrdersApi().cancelGttOrder(CancelGttOrderParams(
-    gttOrderId = "GTT-C25280200137522"
-))
+val cancelled = upstox.cancelGttOrder("GTT-C25280200137522")
 ```
 
 #### Get GTT Orders
 
 ```kotlin
-val gttApi = upstox.getGttOrdersApi()
-
 // Get all GTT orders
-val allGtt = gttApi.getGttOrderDetails()
+val allGtt = upstox.getGttOrders()
 
 // Get specific GTT order
-val gtt = gttApi.getGttOrderDetails("GTT-C25280200071351")
+val gtt = upstox.getGttOrders("GTT-C25280200071351")
 ```
 
 ### Portfolio
@@ -539,31 +776,42 @@ val gtt = gttApi.getGttOrderDetails("GTT-C25280200071351")
 #### Positions
 
 ```kotlin
-val portfolioApi = upstox.getPortfolioApi()
-
 // Get current positions
-val positions = portfolioApi.getPositions()
+val positions = upstox.getPositions()
 for (position in positions) {
     println("${position.tradingSymbol}: Qty=${position.quantity}, P&L=${position.pnl}")
 }
 
 // Get MTF positions (NSE only)
-val mtfPositions = portfolioApi.getMtfPositions()
+val mtfPositions = upstox.getMtfPositions()
 
 // Convert position (e.g., intraday to delivery)
-val converted = portfolioApi.convertPosition(ConvertPositionParams(
-    instrumentToken = "NSE_EQ|INE528G01035",
-    newProduct = Product.DELIVERY,
-    oldProduct = Product.INTRADAY,
-    transactionType = TransactionType.BUY,
+val converted = upstox.convertPosition(ConvertPositionParams {
+    instrumentToken = "NSE_EQ|INE528G01035"
+    newProduct = Product.DELIVERY
+    oldProduct = Product.INTRADAY
+    transactionType = TransactionType.BUY
     quantity = 1
-))
+})
+```
+
+**Java (Convert Position):**
+```java
+ConvertPositionParams params = new ConvertPositionParamsBuilder()
+    .instrumentToken("NSE_EQ|INE528G01035")
+    .newProduct(Product.DELIVERY)
+    .oldProduct(Product.INTRADAY)
+    .transactionType(TransactionType.BUY)
+    .quantity(1)
+    .build();
+
+ConvertPositionResponse converted = upstox.convertPosition(params);
 ```
 
 #### Holdings
 
 ```kotlin
-val holdings = upstox.getPortfolioApi().getHoldings()
+val holdings = upstox.getHoldings()
 for (holding in holdings) {
     println("${holding.companyName}: Qty=${holding.quantity}, P&L=${holding.pnl}")
 }
@@ -574,7 +822,7 @@ for (holding in holdings) {
 #### LTP (Last Traded Price)
 
 ```kotlin
-val ltp = upstox.getMarketQuoteApi().getLtp(listOf(
+val ltp = upstox.getLtp(listOf(
     "NSE_EQ|INE669E01016",
     "NSE_EQ|INE002A01018"
 ))
@@ -585,7 +833,7 @@ println("LTP: ${ltp["NSE_EQ|INE669E01016"]?.ltp}")
 #### OHLC Quotes
 
 ```kotlin
-val ohlc = upstox.getMarketQuoteApi().getOhlcQuote(
+val ohlc = upstox.getOhlc(
     instrumentKeys = listOf("NSE_EQ|INE669E01016"),
     interval = OhlcInterval.ONE_DAY  // ONE_DAY, ONE_MINUTE, THIRTY_MINUTE
 )
@@ -595,7 +843,7 @@ val ohlc = upstox.getMarketQuoteApi().getOhlcQuote(
 
 ```kotlin
 // Get full quotes with depth (max 500 instruments)
-val quotes = upstox.getMarketQuoteApi().getFullQuote(listOf(
+val quotes = upstox.getFullQuote(listOf(
     "NSE_EQ|INE669E01016",
     "NSE_EQ|INE002A01018"
 ))
@@ -606,7 +854,7 @@ val quotes = upstox.getMarketQuoteApi().getFullQuote(listOf(
 
 ```kotlin
 // Get Greeks for option instruments (max 50)
-val greeks = upstox.getMarketQuoteApi().getOptionGreeks(listOf("NSE_FO|43885"))
+val greeks = upstox.getOptionGreeks(listOf("NSE_FO|43885"))
 // Contains: ltp, iv, delta, gamma, theta, vega
 ```
 
@@ -614,18 +862,32 @@ val greeks = upstox.getMarketQuoteApi().getOptionGreeks(listOf("NSE_FO|43885"))
 
 #### Historical Candles
 
+**Kotlin:**
 ```kotlin
-val histApi = upstox.getHistoricalDataApi()
-
-val candles = histApi.getHistoricalCandle(HistoricalCandleParams(
+val candles = upstox.getHistoricalCandles(
     instrumentKey = "NSE_EQ|INE848E01016",
-    unit = CandleUnit.MINUTES,  // MINUTES, HOURS, DAYS, WEEKS, MONTHS
-    interval = 15,               // 1-300 for minutes
+    unit = CandleUnit.MINUTES,    // MINUTES, HOURS, DAYS, WEEKS, MONTHS
+    interval = 15,                // 1-300 for minutes
     toDate = "2025-01-15",
-    fromDate = "2025-01-01"
-))
-for (candle in candles) {
+    fromDate = "2025-01-01"       // Optional
+)
+for (candle in candles.toCandles()) {
     println("${candle.timestamp}: O=${candle.open} H=${candle.high} L=${candle.low} C=${candle.close}")
+}
+```
+
+**Java:**
+```java
+CandleData candles = upstox.getHistoricalCandles(
+    "NSE_EQ|INE848E01016",
+    CandleUnit.MINUTES,
+    15,
+    "2025-01-15",
+    "2025-01-01"  // Optional, can be null
+);
+
+for (Candle candle : candles.toCandles()) {
+    System.out.println(candle.getTimestamp() + ": O=" + candle.getOpen());
 }
 ```
 
@@ -643,11 +905,11 @@ for (candle in candles) {
 
 ```kotlin
 // Current trading day data
-val intraday = upstox.getHistoricalDataApi().getIntradayCandle(IntradayCandleParams(
+val intraday = upstox.getIntradayCandles(
     instrumentKey = "NSE_EQ|INE848E01016",
     unit = CandleUnit.MINUTES,
     interval = 1
-))
+)
 ```
 
 ### Option Chain
@@ -655,7 +917,7 @@ val intraday = upstox.getHistoricalDataApi().getIntradayCandle(IntradayCandlePar
 #### Get Option Contracts
 
 ```kotlin
-val contracts = upstox.getOptionChainApi().getOptionContracts(
+val contracts = upstox.getOptionContracts(
     instrumentKey = "NSE_INDEX|Nifty 50",
     expiryDate = "2024-03-28"  // Optional filter
 )
@@ -665,8 +927,7 @@ val contracts = upstox.getOptionChainApi().getOptionContracts(
 #### Get Option Chain
 
 ```kotlin
-val optionApi = upstox.getOptionChainApi()
-val chain = optionApi.getOptionChain(
+val chain = upstox.getOptionChain(
     instrumentKey = "NSE_INDEX|Nifty 50",
     expiryDate = "2024-03-28"
 )
@@ -680,19 +941,17 @@ for (entry in chain) {
 ### Market Info
 
 ```kotlin
-val marketInfoApi = upstox.getMarketInfoApi()
-
 // Get all market holidays
-val holidays = marketInfoApi.getMarketHolidays()
+val holidays = upstox.getMarketHolidays()
 
 // Get specific holiday
-val holiday = marketInfoApi.getMarketHoliday("2024-01-26")
+val holiday = upstox.getMarketHoliday("2024-01-26")
 
 // Get market timings for a date
-val timings = marketInfoApi.getMarketTimings("2024-01-22")
+val timings = upstox.getMarketTimings("2024-01-22")
 
 // Get current market status
-val status = marketInfoApi.getMarketStatus("NSE")
+val status = upstox.getMarketStatus("NSE")
 // Status: NORMAL_OPEN, NORMAL_CLOSE, PRE_OPEN, CLOSING, etc.
 ```
 
@@ -700,64 +959,125 @@ val status = marketInfoApi.getMarketStatus("NSE")
 
 #### Brokerage Calculation
 
+**Kotlin:**
 ```kotlin
-val charges = upstox.getChargesApi().getBrokerage(BrokerageParams(
-    instrumentToken = "NSE_EQ|INE669E01016",
-    quantity = 10,
-    product = Product.DELIVERY,
-    transactionType = TransactionType.BUY,
+val charges = upstox.getBrokerage(BrokerageParams {
+    instrumentToken = "NSE_EQ|INE669E01016"
+    quantity = 10
+    product = Product.DELIVERY
+    transactionType = TransactionType.BUY
     price = 100.0
-))
+})
 // Returns: brokerage, GST, STT, stamp duty, total
+```
+
+**Java:**
+```java
+BrokerageParams params = new BrokerageParamsBuilder()
+    .instrumentToken("NSE_EQ|INE669E01016")
+    .quantity(10)
+    .product(Product.DELIVERY)
+    .transactionType(TransactionType.BUY)
+    .price(100.0)
+    .build();
+
+BrokerageResponse charges = upstox.getBrokerage(params);
 ```
 
 #### Margin Calculation
 
+**Kotlin:**
 ```kotlin
 // Calculate margin for orders (max 20 instruments)
-val margin = upstox.getMarginsApi().getMargin(MarginParams(
-    instruments = listOf(
-        MarginInstrument(
-            instrumentKey = "NSE_FO|NIFTY24JANFUT",
-            quantity = 50,
-            transactionType = TransactionType.BUY,
-            product = Product.INTRADAY
-        )
-    )
+val margin = upstox.getMargin(listOf(
+    MarginInstrumentParams {
+        instrumentKey = "NSE_FO|NIFTY24JANFUT"
+        quantity = 50
+        transactionType = TransactionType.BUY
+        product = Product.INTRADAY
+    }
 ))
 // Returns: span, exposure, equity margin, and margin benefit for hedged positions
 ```
 
+**Java:**
+```java
+List<MarginInstrumentParams> instruments = Arrays.asList(
+    new MarginInstrumentParamsBuilder()
+        .instrumentKey("NSE_FO|NIFTY24JANFUT")
+        .quantity(50)
+        .transactionType(TransactionType.BUY)
+        .product(Product.INTRADAY)
+        .build()
+);
+
+MarginResponse margin = upstox.getMargin(instruments);
+```
+
 ### Trade P&L
 
+**Kotlin:**
 ```kotlin
-val pnlApi = upstox.getTradePnlApi()
-
 // Get report metadata
-val metadata = pnlApi.getReportMetadata(TradePnlMetadataParams(
-    segment = TradeSegment.EQUITY,
-    financialYear = "2324",
-    fromDate = "01-04-2023",
+val metadata = upstox.getTradePnlMetadata(TradePnlMetadataParams {
+    segment = TradeSegment.EQUITY
+    financialYear = "2324"
+    fromDate = "01-04-2023"
     toDate = "31-03-2024"
-))
+})
 
 // Get P&L report (paginated)
-val report = pnlApi.getProfitAndLossReport(TradePnlReportParams(
-    segment = TradeSegment.EQUITY,
-    financialYear = "2324",
-    pageNumber = 1,
-    pageSize = 100,
-    fromDate = "01-04-2023",
+val report = upstox.getTradePnlReport(TradePnlReportParams {
+    segment = TradeSegment.EQUITY
+    financialYear = "2324"
+    pageNumber = 1
+    pageSize = 100
+    fromDate = "01-04-2023"
     toDate = "31-03-2024"
-))
+})
 
 // Get trade charges breakdown
-val charges = pnlApi.getTradeCharges(TradeChargesParams(
-    segment = TradeSegment.EQUITY,
-    financialYear = "2324",
-    fromDate = "01-04-2023",
+val charges = upstox.getTradeCharges(TradeChargesParams {
+    segment = TradeSegment.EQUITY
+    financialYear = "2324"
+    fromDate = "01-04-2023"
     toDate = "31-03-2024"
-))
+})
+```
+
+**Java:**
+```java
+// Get report metadata
+TradePnlMetadataParams metadataParams = new TradePnlMetadataParamsBuilder()
+    .segment(TradeSegment.EQUITY)
+    .financialYear("2324")
+    .fromDate("01-04-2023")
+    .toDate("31-03-2024")
+    .build();
+
+TradePnlMetadataResponse metadata = upstox.getTradePnlMetadata(metadataParams);
+
+// Get P&L report (paginated)
+TradePnlReportParams reportParams = new TradePnlReportParamsBuilder()
+    .segment(TradeSegment.EQUITY)
+    .financialYear("2324")
+    .pageNumber(1)
+    .pageSize(100)
+    .fromDate("01-04-2023")
+    .toDate("31-03-2024")
+    .build();
+
+TradePnlReportResponse report = upstox.getTradePnlReport(reportParams);
+
+// Get trade charges breakdown
+TradeChargesParams chargesParams = new TradeChargesParamsBuilder()
+    .segment(TradeSegment.EQUITY)
+    .financialYear("2324")
+    .fromDate("01-04-2023")
+    .toDate("31-03-2024")
+    .build();
+
+TradeChargesResponse charges = upstox.getTradeCharges(chargesParams);
 ```
 
 ### Instruments
@@ -765,23 +1085,21 @@ val charges = pnlApi.getTradeCharges(TradeChargesParams(
 Download instrument master data. **No authentication required.**
 
 ```kotlin
-val instrumentsApi = upstox.getInstrumentsApi()
-
 // Download instruments by type
-val nseInstruments = instrumentsApi.getInstruments(InstrumentType.NSE)
-val bseInstruments = instrumentsApi.getInstruments(InstrumentType.BSE)
-val mcxInstruments = instrumentsApi.getInstruments(InstrumentType.MCX)
-val allInstruments = instrumentsApi.getInstruments(InstrumentType.COMPLETE)
+val nseInstruments = upstox.getInstruments(InstrumentDownloadType.NSE)
+val bseInstruments = upstox.getInstruments(InstrumentDownloadType.BSE)
+val mcxInstruments = upstox.getInstruments(InstrumentDownloadType.MCX)
+val allInstruments = upstox.getInstruments(InstrumentDownloadType.COMPLETE)
 
 // Convenience methods
-val nse = instrumentsApi.getNseInstruments()
-val bse = instrumentsApi.getBseInstruments()
-val all = instrumentsApi.getAllInstruments()
+val nse = upstox.getNseInstruments()
+val bse = upstox.getBseInstruments()
+val all = upstox.getAllInstruments()
 
 // Other types: SUSPENDED, MTF, NSE_MIS, BSE_MIS
 
 // Get URL only (for custom download)
-val url = instrumentsApi.getInstrumentsUrl(InstrumentType.NSE)
+val url = upstox.getInstrumentsUrl(InstrumentDownloadType.NSE)
 ```
 
 ### Expired Instruments
@@ -789,32 +1107,38 @@ val url = instrumentsApi.getInstrumentsUrl(InstrumentType.NSE)
 > **Note:** Requires Upstox Plus subscription.
 
 ```kotlin
-val expiredApi = upstox.getExpiredInstrumentsApi()
-
 // Get available expiries for an underlying
-val expiries = expiredApi.getExpiries("NSE_INDEX|Nifty 50")
+val expiries = upstox.getExpiries("NSE_INDEX|Nifty 50")
 
 // Get expired option contracts
-val optionContracts = expiredApi.getExpiredOptionContracts(
+val optionContracts = upstox.getExpiredOptionContracts(
     instrumentKey = "NSE_INDEX|Nifty 50",
     expiryDate = "2024-10-03"
 )
 
 // Get expired futures
-val futureContracts = expiredApi.getExpiredFutureContracts(
+val futureContracts = upstox.getExpiredFutureContracts(
     instrumentKey = "NSE_INDEX|Nifty 50",
     expiryDate = "2024-11-27"
 )
 
 // Get historical candles for expired instrument
-val candles = expiredApi.getExpiredHistoricalCandle(
-    ExpiredHistoricalCandleParams(
-        expiredInstrumentKey = "NSE_FO|NIFTY22D0117800CE",
-        interval = "day",  // 1minute, 3minute, 5minute, 15minute, 30minute, day
-        toDate = "2022-11-30",
-        fromDate = "2022-11-01"
-    )
+val candles = upstox.getExpiredHistoricalCandles(
+    expiredInstrumentKey = "NSE_FO|NIFTY22D0117800CE",
+    interval = "day",  // 1minute, 3minute, 5minute, 15minute, 30minute, day
+    toDate = "2022-11-30",
+    fromDate = "2022-11-01"
 )
+```
+
+**Java (Expired Historical Candles):**
+```java
+List<Candle> candles = upstox.getExpiredHistoricalCandles(
+    "NSE_FO|NIFTY22D0117800CE",
+    "day",         // 1minute, 3minute, 5minute, 15minute, 30minute, day
+    "2022-11-30",
+    "2022-11-01"
+);
 ```
 
 ---
@@ -835,19 +1159,28 @@ val feedClient = upstox.createMarketDataFeedClient(
 
 // Add listener
 feedClient.addListener(object : MarketDataListener {
-    override fun onConnected(isReconnect: Boolean) {
-        if (isReconnect) {
-            println("Reconnected! Subscriptions restored.")
-        } else {
-            println("Connected!")
-            // Subscribe with LTPC mode (minimal bandwidth)
-            feedClient.subscribe(listOf("NSE_EQ|INE669E01016"))
+    override fun onConnected() {
+        println("Connected!")
+        // Subscribe with LTPC mode (minimal bandwidth)
+        feedClient.subscribe(listOf("NSE_EQ|INE669E01016"))
 
-            // Or subscribe with full market data
-            feedClient.subscribe(listOf("NSE_INDEX|Nifty 50"), FeedMode.FULL)
-        }
+        // Or subscribe with full market data
+        feedClient.subscribe(listOf("NSE_INDEX|Nifty 50"), FeedMode.FULL)
     }
 
+    override fun onReconnected() {
+        println("Reconnected! Subscriptions restored automatically.")
+    }
+
+    override fun onDisconnected(code: Int, reason: String) {
+        println("Disconnected: $reason")
+    }
+
+    override fun onError(error: Throwable) {
+        println("Error: ${error.message}")
+    }
+
+    // Optional: override only the data callbacks you need
     override fun onLtpcUpdate(instrumentKey: String, tick: LtpcTick) {
         println("$instrumentKey: LTP=${tick.ltp}, LTT=${tick.ltt}")
     }
@@ -869,16 +1202,9 @@ feedClient.addListener(object : MarketDataListener {
         println("Market status: ${status.segmentStatus}")
     }
 
+    // Optional: handle reconnection attempts
     override fun onReconnecting(attempt: Int, delayMs: Long) {
         println("Reconnecting (attempt $attempt) in ${delayMs}ms...")
-    }
-
-    override fun onDisconnected(code: Int, reason: String) {
-        println("Disconnected: $reason")
-    }
-
-    override fun onError(error: Throwable) {
-        println("Error: ${error.message}")
     }
 })
 
@@ -930,14 +1256,23 @@ val portfolioClient = upstox.createPortfolioStreamClient(
 
 // Add listener
 portfolioClient.addListener(object : PortfolioStreamListener {
-    override fun onConnected(isReconnect: Boolean) {
-        if (isReconnect) {
-            println("Reconnected to portfolio stream")
-        } else {
-            println("Connected to portfolio stream")
-        }
+    override fun onConnected() {
+        println("Connected to portfolio stream")
     }
 
+    override fun onReconnected() {
+        println("Reconnected to portfolio stream")
+    }
+
+    override fun onDisconnected(code: Int, reason: String) {
+        println("Disconnected: $reason")
+    }
+
+    override fun onError(error: Throwable) {
+        println("Error: ${error.message}")
+    }
+
+    // Optional: override only the data callbacks you need
     override fun onOrderUpdate(order: OrderUpdate) {
         println("Order ${order.orderId}: ${order.status}")
     }
@@ -951,19 +1286,12 @@ portfolioClient.addListener(object : PortfolioStreamListener {
     }
 
     override fun onGttOrderUpdate(gttOrder: GttOrderUpdate) {
-        println("GTT ${gttOrder.gttOrderId}: ${gttOrder.status}")
+        println("GTT ${gttOrder.gttOrderId}: ${gttOrder.rules?.firstOrNull()?.status}")
     }
 
+    // Optional: handle reconnection attempts
     override fun onReconnecting(attempt: Int, delayMs: Long) {
         println("Reconnecting (attempt $attempt) in ${delayMs}ms...")
-    }
-
-    override fun onDisconnected(code: Int, reason: String) {
-        println("Disconnected: $reason")
-    }
-
-    override fun onError(error: Throwable) {
-        println("Error: ${error.message}")
     }
 })
 
@@ -996,9 +1324,8 @@ val upstox = Upstox.builder()
     .sandboxMode(enabled = true, token = "your-sandbox-token")
     .build()
 
-// Orders will be simulated (use ordersApi from earlier)
-val ordersApi = upstox.getOrdersApi()
-val response = ordersApi.placeOrder(PlaceOrderParams(
+// Orders will be simulated
+val response = upstox.placeOrder(PlaceOrderParams(
     instrumentToken = "NSE_EQ|INE669E01016",
     quantity = 1,
     product = Product.DELIVERY,
@@ -1024,8 +1351,7 @@ val response = ordersApi.placeOrder(PlaceOrderParams(
 import io.github.sonicalgo.upstox.exception.UpstoxApiException
 
 try {
-    val ordersApi = upstox.getOrdersApi()
-    val order = ordersApi.placeOrder(...)
+    val order = upstox.placeOrder(...)
 } catch (e: UpstoxApiException) {
     println("HTTP Status: ${e.httpStatusCode}")
     println("Message: ${e.message}")
@@ -1045,6 +1371,29 @@ try {
 | Exception | Description |
 |-----------|-------------|
 | `UpstoxApiException` | Exception for all HTTP API errors |
+
+---
+
+## Instrument Key Format
+
+Upstox uses instrument keys in the format `<SEGMENT>|<IDENTIFIER>`.
+
+| Segment | Description | Identifier | Example |
+|---------|-------------|------------|---------|
+| `NSE_EQ` | NSE Equities | ISIN | `NSE_EQ\|INE669E01016` |
+| `BSE_EQ` | BSE Equities | ISIN | `BSE_EQ\|INE669E01016` |
+| `NSE_FO` | NSE F&O | Token | `NSE_FO\|43885` |
+| `BSE_FO` | BSE F&O | Token | `BSE_FO\|12345` |
+| `NSE_INDEX` | NSE Indices | Name | `NSE_INDEX\|Nifty 50` |
+| `BSE_INDEX` | BSE Indices | Name | `BSE_INDEX\|SENSEX` |
+| `MCX_FO` | MCX Commodities | Token | `MCX_FO\|54321` |
+| `NCD_FO` | NSE Currency | Token | `NCD_FO\|67890` |
+| `BCD_FO` | BSE Currency | Token | `BCD_FO\|98765` |
+
+**How to get instrument keys:**
+1. Download instrument master: `upstox.getNseInstruments()` or `upstox.getAllInstruments()`
+2. Search for your symbol in the downloaded list
+3. Use the `instrumentKey` field from the matching instrument
 
 ---
 

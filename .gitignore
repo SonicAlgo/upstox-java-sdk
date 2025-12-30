@@ -43,3 +43,4 @@ bin/
 
 .claude
 CLAUDE.md
+!**/src/main/kotlin/io/github/sonicalgo/upstox/App.kt

@@ -229,4 +229,21 @@ internal object Validators {
             "pageSize must be between $minSize and $maxSize, got $pageSize"
         }
     }
+
+    /**
+     * Valid intervals for expired historical candle data.
+     */
+    private val EXPIRED_CANDLE_INTERVALS = setOf("1minute", "3minute", "5minute", "15minute", "30minute", "day")
+
+    /**
+     * Validates interval for expired historical candle API.
+     *
+     * @param interval The interval to validate
+     * @throws IllegalArgumentException if interval is invalid
+     */
+    fun validateExpiredCandleInterval(interval: String) {
+        require(interval in EXPIRED_CANDLE_INTERVALS) {
+            "Invalid interval. Valid values: ${EXPIRED_CANDLE_INTERVALS.joinToString()}"
+        }
+    }
 }

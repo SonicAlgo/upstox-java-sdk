@@ -1,7 +1,6 @@
 package io.github.sonicalgo.upstox.config
 
 import io.github.sonicalgo.core.config.WebSocketSdkConfig
-import io.github.sonicalgo.upstox.Upstox.*
 
 /**
  * WebSocket configuration for Upstox SDK.

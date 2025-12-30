@@ -1,23 +1,34 @@
 plugins {
-    kotlin("jvm") version "2.2.21"
+    kotlin("jvm")
+    `java-library`
+    id("com.google.devtools.ksp")
     id("com.google.protobuf") version "0.9.5"
     id("com.vanniktech.maven.publish") version "0.35.0"
     signing
 }
 
 group = "io.github.sonicalgo"
-version = "1.2.1"
+version = "2.0.0"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation("io.github.sonicalgo:trading-core:1.0.0")
+    // Builder generator
+    implementation(project(":builder-annotations"))
+    ksp(project(":builder-processor"))
+
+    // Core SDK infrastructure
+    api("io.github.sonicalgo:trading-core:1.2.0")
+
+    // HTTP & JSON
     implementation("com.squareup.okhttp3:okhttp:5.3.0")
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.20.1")
+
+    // Protobuf
     implementation("com.google.protobuf:protobuf-java:4.33.1")
     implementation("com.google.protobuf:protobuf-kotlin:4.33.1")
 }
@@ -26,6 +37,10 @@ kotlin {
     jvmToolchain(11)
     compilerOptions {
         freeCompilerArgs.add("-Xannotation-default-target=param-property")
+    }
+    // Include KSP generated sources
+    sourceSets.main {
+        kotlin.srcDir("build/generated/ksp/main/kotlin")
     }
 }
 
@@ -57,7 +72,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.sonicalgo",
         artifactId = "upstox-java-sdk",
-        version = "1.2.1",
+        version = "2.0.0",
     )
 
     pom {

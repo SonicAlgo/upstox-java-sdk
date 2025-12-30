@@ -1,8 +1,5 @@
 package io.github.sonicalgo.upstox.config
 
-import io.github.sonicalgo.upstox.api.LoginApi
-import io.github.sonicalgo.upstox.api.OrdersApi
-
 /**
  * Constants used by the Upstox SDK.
  */
@@ -49,15 +46,26 @@ internal object UpstoxConstants {
     /** Timeout in seconds for HTTP client shutdown. */
     const val SHUTDOWN_TIMEOUT_SECONDS = 5L
 
+    // Order API endpoints
+    private const val ENDPOINT_PLACE_ORDER = "/order/place"
+    private const val ENDPOINT_MODIFY_ORDER = "/order/modify"
+    private const val ENDPOINT_CANCEL_ORDER = "/order/cancel"
+    private const val ENDPOINT_PLACE_MULTI_ORDER = "/order/multi/place"
+
+    // Login API endpoints
+    private const val ENDPOINT_AUTHORIZATION_DIALOG = "/login/authorization/dialog"
+    private const val ENDPOINT_GET_TOKEN = "/login/authorization/token"
+    private const val ENDPOINT_LOGOUT = "/logout"
+
     /**
      * Endpoints that support sandbox mode.
      * When sandboxEnabled=true, these endpoints use sandboxToken instead of accessToken.
      */
     val SANDBOX_ENABLED_ENDPOINTS = setOf(
-        OrdersApi.Endpoints.PLACE_ORDER,
-        OrdersApi.Endpoints.MODIFY_ORDER,
-        OrdersApi.Endpoints.CANCEL_ORDER,
-        OrdersApi.Endpoints.PLACE_MULTI_ORDER
+        ENDPOINT_PLACE_ORDER,
+        ENDPOINT_MODIFY_ORDER,
+        ENDPOINT_CANCEL_ORDER,
+        ENDPOINT_PLACE_MULTI_ORDER
     )
 
     /**
@@ -65,8 +73,8 @@ internal object UpstoxConstants {
      * These are the only endpoints that can be called without an access token.
      */
     val AUTH_EXEMPT_ENDPOINTS = setOf(
-        LoginApi.Endpoints.AUTHORIZATION_DIALOG,
-        LoginApi.Endpoints.GET_TOKEN,
-        LoginApi.Endpoints.LOGOUT
+        ENDPOINT_AUTHORIZATION_DIALOG,
+        ENDPOINT_GET_TOKEN,
+        ENDPOINT_LOGOUT
     )
 }

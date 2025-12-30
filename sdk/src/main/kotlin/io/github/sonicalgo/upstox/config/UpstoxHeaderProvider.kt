@@ -10,12 +10,9 @@ import io.github.sonicalgo.core.client.HeaderProvider
  * - Auth-exempt endpoints (login, token exchange)
  * - Sandbox mode for order endpoints
  *
- * @property config Upstox SDK configuration containing access token
  * @see UpstoxHttpClientProvider
  */
-internal class UpstoxHeaderProvider(
-    private val config: UpstoxConfig
-) : HeaderProvider {
+internal class UpstoxHeaderProvider : HeaderProvider {
 
     /**
      * Returns empty headers.
