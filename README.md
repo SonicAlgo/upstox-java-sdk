@@ -11,13 +11,13 @@ Unofficial Kotlin/Java SDK for the [Upstox](https://upstox.com) trading platform
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("io.github.sonicalgo:upstox-java-sdk:2.0.0")
+implementation("io.github.sonicalgo:upstox-java-sdk:2.0.1")
 ```
 
 ### Gradle (Groovy)
 
 ```groovy
-implementation 'io.github.sonicalgo:upstox-java-sdk:2.0.0'
+implementation 'io.github.sonicalgo:upstox-java-sdk:2.0.1'
 ```
 
 ### Maven
@@ -26,7 +26,7 @@ implementation 'io.github.sonicalgo:upstox-java-sdk:2.0.0'
 <dependency>
     <groupId>io.github.sonicalgo</groupId>
     <artifactId>upstox-java-sdk</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1</version>
 </dependency>
 ```
 

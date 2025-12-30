@@ -8,17 +8,13 @@ plugins {
 }
 
 group = "io.github.sonicalgo"
-version = "2.0.0"
+version = "2.0.1"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    // Builder generator
-    implementation(project(":builder-annotations"))
-    ksp(project(":builder-processor"))
-
     // Core SDK infrastructure
     api("io.github.sonicalgo:trading-core:1.2.0")
 
@@ -31,6 +27,10 @@ dependencies {
     // Protobuf
     implementation("com.google.protobuf:protobuf-java:4.33.1")
     implementation("com.google.protobuf:protobuf-kotlin:4.33.1")
+
+    // Builder generator (compileOnly - annotation is SOURCE retention, not needed at runtime)
+    compileOnly(project(":builder-annotations"))
+    ksp(project(":builder-processor"))
 }
 
 kotlin {
@@ -72,7 +72,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.sonicalgo",
         artifactId = "upstox-java-sdk",
-        version = "2.0.0",
+        version = "2.0.1",
     )
 
     pom {
